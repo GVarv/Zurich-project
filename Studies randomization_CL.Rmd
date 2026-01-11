@@ -1,0 +1,207 @@
+---
+title: "Studies randomization"
+output: html_document
+date: "2025-04-28"
+---
+
+@Giulia: This is open for discussion, but I would rather remove the data management steps related to the Excel file and instead provide the list of NCTs directly, so that the code remains self-contained and independent of the external file.
+
+@Giulia: It is possible to transfer a dataframe between R and Python without having to write it to disk :) 
+
+```{r Load the NCTs}
+library(dplyr)
+
+#The NCTs correspond to the unique values taken from column NCT in the file 'CHMP – Indications Assessment (2020–2024).xlsx' after filtering the table on 'Yes' in the column 'Indication included'.
+#The file 'CHMP – Indications Assessment (2020–2024).xlsx' is available at the following URL: XXX
+
+nct_database <- as.data.frame(c(
+"NCT02200614", "NCT02242942", "NCT02737501", "NCT02990338", "NCT01777152", "NCT01546038", "NCT02928224", "NCT02437318", "NCT02568267", "NCT02184195", "NCT02508532", "NCT03525678", "NCT02475681", "NCT02048813", "NCT03043872", "NCT02477644", "NCT02987543", "NCT03215706", "NCT03434379", "NCT02655016", "NCT02601313", "NCT02000427", "NCT02569242", "NCT02113982", "NCT03493854", "NCT03158688", "NCT03248492", "NCT01829711", "NCT03157128", "NCT02614794", "NCT02603432", "NCT02563002", "NCT02336815", "NCT02924376", "NCT02684292", "NCT02715284", "NCT03141177", "NCT03275285", "NCT02004522", "NCT01882803", "NCT02409342", "NCT02677896", "NCT01757535", "NCT02899299", "NCT02511106", "NCT02993523", "NCT03069352", "NCT02393859", "NCT03201965", "NCT03180736", "NCT03189719", "NCT03088540", "NCT03132636", "NCT02060188", "NCT03361748", "NCT02399085", "NCT02743494", "NCT03053440", "NCT03037385", "NCT03353753", "NCT01744366", "NCT00833248", "NCT02799706", "NCT02819518", "NCT02872116", "NCT02609776", "NCT02574455", "NCT03517449", "NCT02811861", "NCT03600883", "NCT03474107", "NCT02864992", "NCT03142334", "NCT03052608", "NCT02631044", "NCT03484702", "NCT03580655", "NCT03070392", "NCT03085095", "NCT03143153", "NCT02632409", "NCT03155997", "NCT03548207", "NCT03690388", "NCT02460198", "NCT02628067", "NCT03635567", "NCT03568461", "NCT03274492", "NCT02500407", "NCT02414139", "NCT03036488", "NCT02486718", "NCT03105336", "NCT03553836", "NCT03110562", "NCT02963493", "NCT03106779", "NCT03529110", "NCT03462719", "NCT02910583", "NCT02032823", "NCT03470922", "NCT04557098", "NCT02614066", "NCT03589469", "NCT03846427", "NCT00939770", "NCT03391466", "NCT03336333", "NCT03734016", "NCT03257267", "NCT04014075", "NCT03875235", "NCT03732820", "NCT03298451", "NCT03164616", "NCT03734029", "NCT02799602", "NCT03748641", "NCT03173248", "NCT02989857", "NCT03409614", "NCT03575351", "NCT03075696", "NCT03740529", "NCT02052778", "NCT02998528", "NCT04737187", "NCT03901339", "NCT04145531", "NCT03306264", "NCT03778931", "NCT03399799", "NCT03625037", "NCT03430843", "NCT03615326", "NCT04099251", "NCT02684058", "NCT02668653", "NCT01712490", "NCT04644237", "NCT02504372", "NCT03151811", "NCT04649359", "NCT03332017", "NCT03981796", "NCT03675737", "NCT03522246", "NCT03785249", "NCT03731260", "NCT04003636", "NCT03395197", "NCT03651128", "NCT03899792", "NCT03594747", "NCT03599713", "NCT04181827", "NCT03425643", "NCT04083235", "NCT02319837", "NCT04322539", "NCT04305496", "NCT03456076", "NCT03036098", "NCT02650401", "NCT04538664", "NCT03789604", "NCT04035486", "NCT03663205", "NCT03358875", "NCT03390504", "NCT04269200", "NCT03581786", "NCT03829969", "NCT03504397", "NCT03653507", "NCT03915951", "NCT04223856", "NCT04988295", "NCT03191786", "NCT04209855", "NCT04063163", "NCT03710603", "NCT03914612", "NCT04221945", "NCT00836654", "NCT03701334", "NCT03777657", "NCT03783442", "NCT03093116", "NCT04487080", "NCT04008030", "NCT03319667", "NCT03521154", "NCT04195750", "NCT02003222")) %>%
+  rename(NCT = 1)
+
+```
+
+```{r install_python_pkgs}
+library(reticulate)
+py_require(c("pandas", "pytrials"))
+```
+
+```{python import clinicaltrials data}
+
+# Import libraries
+from pytrials.client import ClinicalTrials
+import pandas as pd
+
+# Retrieve the nct_database from R
+nct_ids = r.nct_database["NCT"].tolist()
+
+# Define a function to fetch trial data by NCT ID
+ct = ClinicalTrials()
+def get_trial_by_nct(nct_ids):
+    trial_data = ct.get_full_studies(search_expr=nct_id)
+    return trial_data
+
+# Loop through all NCT IDs and collect the trial data
+all_trials = []
+for nct_id in nct_ids:
+    try:
+        trial_info = get_trial_by_nct(nct_id)
+        all_trials.append(trial_info)  # Ajouter l'info à la liste
+        print(f"✅ {nct_id} succed to get it !")
+    except Exception as e:
+        print(f"❌ error {nct_id} : {e}")
+
+headers = all_trials[0][0]
+rows = [study[1] for study in all_trials]
+
+# Create a pandas dataframe
+df = pd.DataFrame(rows, columns=headers)
+
+print("Extraction over !")
+```
+
+
+```{r datamanagement}
+
+# Import libraries
+library("tidyr","dplyr")
+
+# Retrieve the df from Python
+df <- py$df
+
+# Extract specific fields from the 'Study Design' column into four separate columns:
+# (i) 'Allocation', (ii) 'Intervention_Model', (iii) 'Masking', and (iv) 'Primary_Purpose'.
+
+df_clean <- df %>%
+  extract(
+    `Study Design`,
+    into = c("Allocation", "Intervention_Model", "Masking", "Primary_Purpose"),
+    regex = "Allocation: ([^|]*)\\|Intervention Model: ([^|]*)\\|Masking: ([^|]*)\\|Primary Purpose: (.*)"
+  )
+
+```
+
+```{r Check intervention model}
+
+# Create a contingency table
+table(df_clean$Allocation, df_clean$Intervention_Model)
+
+# We can see that most of the NA allocations are single group
+# Datamangement : if the 'Intervention_Model' column contains the term "SINGLE_GROUP", then set 'Allocation' to "NON_RANDOMIZED"; otherwise, keep the original value.
+
+df_clean <- df_clean %>%
+  mutate(Allocation = if_else(grepl("SINGLE_GROUP", Intervention_Model), "NON_RANDOMIZED", Allocation))
+
+#Identify NCTs where the 'Allocation' column is empty or NA
+df_clean$`NCT Number`[df_clean$Allocation =="" | df_clean$Allocation =="NA"]
+```
+
+Manual review of the 3 NCTs with incomplete allocation data :
+- NCT00939770 : dose-escalation study             => NON_RANDOMIZED
+- NCT04145531 : dose confirmation + PK study      => NON_RANDOMIZED
+- NCT03625037 : dose-escalation study + expansion => NON_RANDOMIZED
+Moreover neither of them seem to analyze the outcomes we are interested in so we can safely remove them from the dataset.
+We will therefore take into consideration only the studies where the allocation is indicated as "Randomized".
+
+Since none of the one not listed as "Randomized" seems to fit our inclusion criteria, we can select only Randomized Clinical Trials:
+```{r selection of randomized trials}
+RCT=subset(df_clean, Allocation == "RANDOMIZED")
+```
+
+@Giulia : I'm not sure the step with Interventions is necessary. I would prefer to control the 'phase' variable instead. By the way, the three you excluded are all Phase 2 trials!
+
+```{r Check non Phase 3}
+#Check the Phases column
+table(RCT$Phases)
+
+#Identify NCTs where the 'Phases' column is not a Phase 3
+RCT$`NCT Number`[RCT$Phases !="PHASE3"]
+```
+
+Manual review of the 13 NCTs that are not PHASE3:
+@Giulia: I kept your comments for the ones you described. Please add a comment for the remaining 7!
+
+- NCT01546038: is divided in two phases, where the second phase is a randomized with patients getting either the drug or the standard of care. We therefore kept the study but if it will be selected we will analyze only the second part.
+- NCT03525678: you excluded it.
+- NCT03248492: you excluded it.
+- NCT02614794: is a RCT so we included it.
+- NCT03600883: was described as a Sequential study. We manually checked and it didn't seem to be a randomized study so we removed it from the dataset.
+- NCT03070392: is a RCT so we included it.
+- NCT02910583: isn't randomized so we exclude it.
+- NCT03470922: is a RCT so we included it.
+- NCT02684058: is divided in two cohorts, we will analyse only the LGG cohort because for the other one is not a RCT trial.
+- NCT04644237: you excluded it.
+- NCT03332017: is a RCT so we included it.
+- NCT03731260: has three parts but only the part 2 is randomized (patients receive either the drug or placebo). We kept the study but if it will be selected, we will analyze only the second part.
+- NCT00836654: was described as Crossover trial because after the first paracentesis the patients in the placebo arm were able to crossover to the Catumaxomab-arm.This means that the first part is randomized, with a possibility of crossover later, so we kept the study but, in case it will be selected, we will analyze only the first part.
+
+Also in the randomized studies we have to check for groups that are not parallel, to make sure that they can be included in our study.
+```{r Check non parallel studies}
+#Check the Intervention_Model column
+table(RCT$Intervention_Model)
+
+#Identify NCTs where the 'Intervention_Model' column is not parralel
+RCT$`NCT Number`[RCT$Intervention_Model !="PARALLEL"]
+
+```
+
+Manual review of the 7 NCTs that are not PARALLEL:
+- NCT01546038: is divided in two phases, where the second phase is a randomized with patients getting either the drug or the standard of care. We therefore kept the study but if it will be selected we will analyze only the second part.
+- NCT02928224: was identified as Sequential but to a manual screening, it seemed a normal RCT with 3 arm (DOI: 10.1056/NEJMoa1908075).
+- NCT03088540: was identified as Crossover because Crossover from chemotherapy to cemiplimab was allowed following disease progression. It was the same situation at the first two studies so it will be included (https://doi.org/10.1016/S0140-6736(21)00228-2).
+- NCT03600883: was described as a Sequential study. We manually checked and it didn't seem to be a randomized study so we removed it from the dataset.
+- NCT03306264: was identified as Crossover study for the drug "Inaqovi". Having a closer look at the study and at the EPAR, this study is a real Crossover study so it cannot be included in our study.
+- NCT03829969: was identified as Sequential but to a manual screening, it seemed a normal RCT with 2 arms (10.1016/j.ccell.2022.02.007).
+- NCT00836654 was described as Crossover trial because after the first paracentesis the patients in the placebo arm were able to crossover to the Catumaxomab-arm.This means that the first part is randomized, with a possibility of crossover later, so we kept the study but, in case it will be selected, we will analyze only the first part.
+
+```{r Remove non RCT}
+excluded=c("NCT03525678", "NCT03248492","NCT00836654","NCT01546038","NCT01744366","NCT01777152","NCT02003222","NCT02242942","NCT02319837","NCT02409342", "NCT02437318","NCT02504372","NCT02569242","NCT02614794","NCT02677896","NCT02684292","NCT02743494","NCT02811861","NCT02928224","NCT02998528","NCT03043872","NCT03053440","NCT03070392","NCT03085095","NCT03106779","NCT03110562","NCT03151811","NCT03173248","NCT03180736","NCT03191786","NCT03215706", "NCT03257267","NCT03274492","NCT03336333","NCT03353753","NCT03390504","NCT03409614","NCT03425643","NCT03434379","NCT03474107","NCT03493854","NCT03504397","NCT03517449","NCT03521154","NCT03553836","NCT03575351","NCT03594747","NCT03653507","NCT03663205","NCT03731260","NCT03734016","NCT03778931","NCT03783442","NCT03789604","NCT03829969","NCT03914612","NCT04003636","NCT04008030","NCT04223856","NCT04269200","NCT04322539","NCT04988295") #add NCT once you have review all NCTs
+
+RCT_clean <- RCT %>%
+    filter(!`NCT Number` %in% excluded)
+```
+
+
+Now we can proceed with the randomization.
+We should also select a seed so that the results are reproducible.
+```{r Randomization}
+set.seed(77)
+s=sample(RCT_clean$`NCT Number`, 2, replace = FALSE)
+sampled_NCT=RCT_clean[which(RCT_clean$`NCT Number` %in% s),]
+s
+```
+
+
+
+
+
+
+Now we have a table of the indications included in the randomization, the next step is to extract the NCT, which means also divide in multiple items the indications that have more than one pivotal CT.
+
+```{r Studies identification}
+library(tidyr)
+
+#Check if there are studies without NCT
+indications[which(indications$NCT=="NA"),]
+#If there are no CT that don't have an NCT reduce the dataset using only the NCT column as study identifier.
+
+ot=separate_rows(reduced, "NCT", sep="; ")
+
+list(unique(ot$NCT))
+
+```
+
+The next step consist in removing the duplicate NCTs.
+```{r Remove duplicates}
+#See if the same CT Id appears on multiple trials, since we want to avoid duplicate in the selection.
+n_occur_CT <- data.frame(table(ot$NCT))
+colnames(n_occur_CT)=c("NCT", "Freq")
+#The table orders them in numerical ascending order according to number 
+
+#Check how many NCT have been used for multiple indications
+length(which(n_occur_CT$Freq>1))
+```
+Get the unique NCT to extract information from and write them in a csv.
+We are going to use in the python code to extract all the info about the trails from the Clinical Trial.gov API.
+```{r Export NCTs}
+write.csv(n_occur_CT$NCT, "NCT_IDs.csv",row.names = F)
+```

@@ -1,0 +1,220 @@
+---
+title: "Studies randomization"
+output: html_document
+date: "2025-04-28"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(reticulate)
+#use_condaenv("r-reticulate-py310", required = TRUE)
+```
+
+```{r Load the indication file}
+#install.packages("readxl")
+library(readxl)
+db=read_xlsx("Meeting highlights.xlsx", sheet = "Indications table")
+#names(db)
+indications=db[which(db$`Indication included`=="Yes"),]
+```
+
+Now we have a table of the indications included in the randomization, nthe next step is to extract the NCT, which means also divide in multiple items the indications that have more than one pivotal CT.
+```{r Studies identification}
+library(tidyr)
+#Check if there are studies without NCT
+indications[which(indications$NCT=="NA"),]
+#If there are no CT that don't have an NCT reduce the dataset using only the NCT column as study identifier.
+reduced=indications[,c("Name of medicine","International non-proprietary name (INN)","Number of main studies","NCT" )]
+ot=separate_rows(reduced, "NCT", sep="; ")
+```
+
+The next step consist in removing the duplicate NCTs.
+```{r Remove duplicates}
+#See if the same CT Id appears on multiple trials, since we want to avoid duplicate in the selection.
+n_occur_CT <- data.frame(table(ot$NCT))
+colnames(n_occur_CT)=c("NCT", "Freq")
+#The table orders them in numerical ascending order according to number 
+
+#Check how many NCT have been used for multiple indications
+length(which(n_occur_CT$Freq>1))
+```
+Get the unique NCT to extract information from and write them in a csv.
+We are going to use in the python code to extract all the info about the trails from the Clinical Trial.gov API.
+```{r Export NCTs}
+write.csv(n_occur_CT$NCT, "NCT_IDs.csv",row.names = F)
+```
+
+
+```{r install_python_pkgs}
+py_install(c("pandas", "pytrials"))
+```
+
+```{python}
+#I had to do a lot of different steps to make python work in RStudio for my computer, but for Manon it was smooth. I hope it will be for you as well
+import pytrials
+from pytrials.client import ClinicalTrials
+import os
+import pandas as pd
+
+
+#Downloding the database with all the NCT (in csv)
+
+nct_database = pd.read_csv(filepath_or_buffer="NCT_IDs.csv", delimiter=",")
+
+
+nct_ids = nct_database["x"].tolist()
+#nct_ids = nct_database["NCT"].tolist()
+
+
+print(nct_ids)
+
+
+def get_trial_by_nct(nct_id):
+    ct = ClinicalTrials()
+    
+    # get the data from the clincaltrial 
+    
+    trial_data = ct.get_full_studies(search_expr=nct_id)
+    
+    return trial_data
+
+#stock all the information in a unique database 
+
+all_trials = []
+
+
+for nct_id in nct_ids:
+    try:
+        trial_info = get_trial_by_nct(nct_id)
+        all_trials.append(trial_info)  # Ajouter l'info à la liste
+        print(f"✅ {nct_id} succed to get it !")
+    except Exception as e:
+        print(f"❌ error {nct_id} : {e}")
+
+# Convertir en DataFrame et sauvegarder en CSV si besoin
+headers = all_trials[0][0]
+rows = [study[1] for study in all_trials]
+
+# Convertir en dataframe pandas
+df = pd.DataFrame(rows, columns=headers)
+
+df.to_csv("clinical_trials_results.csv", index=False)
+
+print("Extraction over !")
+
+```
+
+
+```{r Get API information}
+library(tidyverse)
+CT_info=read.csv("clinical_trials_results.csv")
+
+#Split the Study Design column, which contains for different information.
+#Like this you are just creating new columns, the original one will still be there so if you ever need to double xcheck something you can do it but you can also access the info you need very fast and in a simpler way.
+
+all=str_split_fixed(CT_info$Study.Design,'\\|', 4)
+Allocation=as.factor(gsub("Allocation: ", "", all[,1]))
+Interv_model=as.factor(gsub("Intervention Model: ", "", all[,2]))
+Masking=as.factor(gsub("Masking: ", "", all[,3]))
+Purpose=as.factor(gsub("Primary Purpose: ", "", all[,4]))
+
+#attach the new comlumns to the original database. I put them in front so it' s easier to see them when you opne the datyabase, but it is not fundamental.
+library(tibble)
+CT_rando_info=add_column(CT_info, Allocation, .after = "NCT.Number")
+CT_rando_info=add_column(CT_rando_info, Interv_model, .after = "Allocation")
+CT_rando_info=add_column(CT_rando_info, Masking, .after = "Interv_model")
+CT_rando_info=add_column(CT_rando_info, Purpose, .after = "Masking")
+
+table(CT_rando_info$Allocation) #See if there are non randomized studies
+```
+
+Some CT allocation is listed as NA, so we should check what other information we get for these trials and see if we need to manually check it or if there is some proxy that we can use or if they're never randomized.
+
+```{r Check interventio nmodel}
+mistery=subset(CT_rando_info,Allocation == "NA"|Allocation=="")
+table(mistery$Interv_model)
+
+#We can see that most of the NA allocations are single group, so we can exclude that. We are going to check for the sequential one, to make sure they can't be RCT
+
+mistery[which(mistery$Interv_model!="SINGLE_GROUP"),]
+```
+NCT00939770 Seem to only have one arm to study side effects and best dose.
+NCT03625037	Seems to be mostly about dose escalation and it shows only one arm, so we can remove it because no randomization can be present.
+NCT04145531 Also seem to have only one arm.
+Moreover neither of them seem to analyze the variables we are interested in so we can safely remove them from the dataset.
+We will therefore take into consideration only the studies where the allocation is indicated as "Randomized".
+
+
+Since none of the one not listed as "Randomized" seems to fit our inclusion criteria, we can select only Randomized Clinical Trials:
+```{r Selection of randomized trials}
+RCT=subset(CT_rando_info,Allocation == "RANDOMIZED")
+```
+
+To make sure these trials are also controlled ones, we check for the presence of Placebo in the "Intervention" column.
+```{r Placebo in studies}
+#Check if the intervention column contains "Placebo"
+RCT$Controlled=grepl("lacebo", RCT$Interventions) #I didn't put the first letter, so we should be able to find it both if they used the majuscle and the minuscle (I checked and there are some written in both ways).
+table(RCT$Controlled)
+```
+We can see that 94 studies do not have placebo but, as they might use as control the standard of care, we can not exclude them directly, but we first need to check manually weather they are controlled studies.
+
+```{r}
+View(RCT[RCT$Controlled==FALSE, c("NCT.Number","Interventions")]) #Manual check of the intervention used
+```
+
+The studies that did not seemed RCT after a manual screening are: 
+1. NCT03248492
+2. NCT03525678
+3. NCT04644237
+
+```{r Remove non RCTs}
+non_RCT=c("NCT03248492","NCT03525678", "NCT04644237")
+screened_RCT=RCT[-(which(RCT$NCT.Number %in% non_RCT)),]
+```
+
+
+
+Also in the randomized studies we have to check for groups that are not parallel, to make sure that they can be included in our study.
+```{r Check non parallel studies}
+print(screened_RCT[which(screened_RCT$Interv_model!="PARALLEL"),])
+```
+Among the randomized, non parallel studies we have found 4 listed as "CROSSOVER"; 3 as "SEQUENTIAL" and 1 without description, for a total of 8 non "PARALLEL" interventions.
+We manually checked each of them:
+
+1. NCT00836654 was described as Crossover trial because after the first paracentesis the patients in the placebo arm were able to crossover to the Catumaxomab-arm.This means that the first part is randomized, with a possibility of crossover later, so we kept the study but, in case it will be selected, we will analyze only the first part.
+
+2. NCT01546038 is divided in two phases, where the second phase is a randomized with patients getting either the drug or the standard of care. We therefore kept the study but if it will be selected we will analyze only the second part.
+
+3. NCT02928224 was identified as Sequential but to a manual screening, it seemed a normal RCT with 3 arms (DOI: 10.1056/NEJMoa1908075).
+
+4. NCT03088540 was identified as Crossover because Crossover from chemotherapy to cemiplimab was allowed following disease progression. It was the same situation at the first two studies so it will be included (https://doi.org/10.1016/S0140-6736(21)00228-2).
+
+5. NCT03306264 was identified as Crossover study for the drug "Inaqovi". Having a closer look at the study and at the EPAR, this study is a real Crossover study so it cannot be included in our study.
+
+6. NCT03600883 was described as a Sequential study. We manually checked and it didn't seem to be a randomized study so we removed it from the dataset.
+
+7. NCT03829969 was identified as Sequential but to a manual screening, it seemed a normal RCT with 2 arms (10.1016/j.ccell.2022.02.007).
+
+```{r Remove non RCT}
+excluded=c("NCT03306264","NCT03600883")
+RCT_clean=screened_RCT[-which(screened_RCT$NCT.Number %in% excluded),]
+```
+
+```{r}
+library(samplingbook)
+sample.size.prop(e=0.12, P = 0.34, N = Inf, level = 0.95)
+```
+
+
+Now we can proceed with the randomization.
+We should also select a seed so that the results are reproducible.
+```{r Randomization}
+set.seed(77)
+s=sample(RCT_clean$NCT.Number, 60, replace = FALSE)
+sampled_NCT=RCT_clean[which(RCT_clean$NCT.Number %in% s),]
+s
+```
+
+
+
+
