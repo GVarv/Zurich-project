@@ -1395,6 +1395,19 @@ ggplot(pip_yes_OS, aes(x = Variable, y = PIP, fill = Component, color = Componen
   )
 
 ```
+####Linear mixed model with covariates
+```{r}
+m_TBE_cov=lm(se ~ log_ratio*Censoring+log_ratio*Methods+log_ratio*Population, data = dif_TBE_clean)
+
+summ(m_TBE_cov,model.info=FALSE)
+```
+```{r}
+m_os_cov=lm(se ~ log_ratio*Censoring+log_ratio*Methods+log_ratio*Population, data = dif_OS_clean)
+summ(m_os_cov,model.info=FALSE)
+```
+
+
+
 ## Conclusions
 
 The 60 randomly selected studies that we analysed in this project gave us an idea on the use of sensitivity analyses in oncological RCTs. Even if sensitivity analyses are a very useful practice, especially when dealing with tumour-based endpoints, which are more prone to subjectivity and bias, they are still not planned, nor reported for many studies. The analyses that were reported employed mostly different censoring rules than those used in the primary analysis, and a lower number of them also focused on the different methods and assessment strategies. When comparing these sensitivity analyses with the primary, it was possible to see some effect of Hazard Ratios on the Standard errors, but while the models we ran seemed to indicate a relationship between these two values, analyzing different covariates and accounting for clustering in the different studies has not led to an explanation of this relationship. Using Finite Mixture Models indicates very different trends for both tumour-based endpoints and Overall Survival sensitivity analyses which could be infleunced by the category of sensitivity analyses. Further assessment on new samples of studies would be needed to confirm this hypothesis.
