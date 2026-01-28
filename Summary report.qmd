@@ -442,6 +442,30 @@ ggplot(f_long, aes(x = Category, y = Count, fill = Endpoint)) +
   #labs(x = "Category",y = "Frequency (%)") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
+```{r}
+rel_freq=freq_join
+rel_freq[,"TBE"]=(rel_freq[,"TBE"]/sum(rel_freq["TBE"]))*100
+rel_freq[,"OS"]=(rel_freq[,"OS"]/sum(rel_freq["OS"]))*100
+
+f_long_rel <- rel_freq %>%
+  pivot_longer(
+    cols = c(OS, TBE),
+    names_to = "Endpoint",
+    values_to = "Count"
+  )
+
+# grouped bar plot
+ggplot(f_long_rel, aes(x = Category, y = Count, fill = Endpoint)) +
+  geom_col(
+    position = position_dodge(width = 0.55),  # space between bars, 
+    color = "black") +
+  scale_y_continuous(breaks = seq(0, 100, by = 10)) +
+  theme_minimal() +
+  scale_fill_manual(values = c("OS" = "dodgerblue", "TBE" = "seagreen3"))+
+  labs(x = "Category",y = "Frequency (%)") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
 
 From this histogram, we can see that, while the sensitivity analyses for TBE mostly focused on different censoring rules and slightly less on methods, for OS, the focus of the sensitivity analyses was almost entirely on different methods. In the case of TBE, it is worth keeping in mind that different methods also include changes in the way the disease progression is assessed between investigator-based and Independent Central Review (ICR)-based.
 
