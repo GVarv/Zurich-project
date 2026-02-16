@@ -1251,8 +1251,11 @@ ggplot(pip_yes_component1, aes(x = Variable, y = PIP, fill = Component, color = 
 
 ```
 ```{r}
+library(ggplot2)
+library(ggbeeswarm)
+
 ggplot(pip_yes_component1, aes(x = Variable, y = PIP, fill = Component, color = Component)) +
-  # Regular boxplot without median line
+  # Boxplot without median line
   geom_boxplot(
     width = 0.6,
     outlier.shape = NA,
@@ -1260,30 +1263,35 @@ ggplot(pip_yes_component1, aes(x = Variable, y = PIP, fill = Component, color = 
     position = position_dodge(0.8),
     show.legend = FALSE
   ) +
-  # Overlay mean as the "middle" line
+  # Mean as a crossbar (ymin = y = ymax = mean)
   stat_summary(
-    fun = mean,
+    fun.data = function(x) {
+      m <- mean(x)
+      data.frame(y = m, ymin = m, ymax = m)
+    },
     geom = "crossbar",
     width = 0.6,
     position = position_dodge(0.8),
-    color = "black",   # or Component color if you prefer
-    fatten = 1
+    color = "black"
   ) +
-  geom_quasirandom(width = 0.15, alpha = 0.6, size = 1.5, dodge.width = 0.8) +
-  scale_fill_manual(
-    values = c("Component 1" = "deepskyblue2"),
-    drop = FALSE
+  # Overlay individual points
+  geom_quasirandom(
+    width = 0.15,
+    alpha = 0.6,
+    size = 1.5,
+    dodge.width = 0.8
   ) +
-  scale_color_manual(
-    values = c("Component 1" = "deepskyblue2"),
-    drop = FALSE
-  ) +
+  # Colors
+  scale_fill_manual(values = c("Component 1" = "deepskyblue2"), drop = FALSE) +
+  scale_color_manual(values = c("Component 1" = "deepskyblue2"), drop = FALSE) +
+  # Labels
   labs(
     x = "Study Variable",
     y = "Posterior Inclusion Probability",
-    title = "Posterior Inclusion Probabilities in TBE for each category in Component 1"
+    #title = "Posterior Inclusion Probabilities in TBE for each category in Component 1"
   ) +
   theme(legend.position = "none")
+
 
 ```
 
@@ -1534,6 +1542,33 @@ ggplot(pip_one_component_OS, aes(x = Variable, y = PIP, fill = Component, color 
   theme_minimal() +
   theme(legend.position = "none")
 
+```
+```{r}
+library(ggplot2)
+library(ggbeeswarm)
+
+ggplot(pip_one_component_OS, aes(x = Variable, y = PIP, fill = Component, color = Component)) +
+  geom_boxplot(width = 0.6, outlier.shape = NA, alpha = 0.4, position = position_dodge(0.8)) +
+  stat_summary(
+    fun.data = function(x) {
+      m <- mean(x)
+      data.frame(y = m, ymin = m, ymax = m)
+    },
+    geom = "crossbar",
+    width = 0.6,
+    position = position_dodge(0.8),
+    color = "black"
+  ) +
+  geom_quasirandom(width = 0.15, alpha = 0.6, size = 1.5, dodge.width = 0.8) +
+  scale_fill_manual(values = c("Component 2" = "#FF6347")) +
+  scale_color_manual(values = c("Component 2" = "#FF6347")) +
+  labs(
+    x = "Study Variable",
+    y = "Posterior Inclusion Probability",
+    #title = "Posterior Inclusion Probabilities by Component for each category"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
 ```
 
 ```{r}
