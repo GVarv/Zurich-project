@@ -442,6 +442,7 @@ ggplot(f_long, aes(x = Category, y = Count, fill = Endpoint)) +
   #labs(x = "Category",y = "Frequency (%)") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
+
 ```{r}
 rel_freq=freq_join
 rel_freq[,"TBE"]=(rel_freq[,"TBE"]/sum(rel_freq["TBE"]))*100
@@ -465,7 +466,6 @@ ggplot(f_long_rel, aes(x = Category, y = Count, fill = Endpoint)) +
   labs(x = "Category",y = "Frequency (%)") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
-
 
 From this histogram, we can see that, while the sensitivity analyses for TBE mostly focused on different censoring rules and slightly less on methods, for OS, the focus of the sensitivity analyses was almost entirely on different methods. In the case of TBE, it is worth keeping in mind that different methods also include changes in the way the disease progression is assessed between investigator-based and Independent Central Review (ICR)-based.
 
@@ -786,104 +786,104 @@ summ(model_TBE_dummycat_inter,model.info=FALSE)
 To facilitate the interpretation of the estimates, we have combined the terms involved in the interaction, obtaining the following table:
 
 ```{r Tidy table TBE}
-#| warning: false
-coefs <- tidy(model_TBE_dummycat_inter)
-colnames(coefs)[which(colnames(coefs)=="term")]="Factor"
-library(broom.mixed)
-
-
-non_interactions <- coefs %>%
-  filter(!grepl(":", Factor)) %>%          
-  filter(effect == "fixed") %>%           
-  select(
-    Factor,
-    estimate
-  )
-
-interactions <- coefs %>%
-  filter(grepl(":", Factor)) %>%          
-  select(
-    Factor,
-    estimate
-  )
-
-tab=rbind(non_interactions,interactions)
-
-log_ratio_est <- non_interactions %>%
-  filter(Factor == "log_ratio") %>%
-  pull(estimate)
-
-category_effects <- non_interactions %>%
-  filter(grepl("^Censoring|^Methods|^Population", Factor)) %>%
-  select(Factor, estimate)
-
-non_interaction_tab <- non_interactions %>%
-  mutate(
-    log_ratio_effect = ifelse(Factor == "log_ratio", estimate, 0),
-
-    category_effect = case_when(
-      grepl("^Censoring", Factor) ~ estimate,
-      grepl("^Methods", Factor) ~ estimate,
-      grepl("^Population", Factor) ~ estimate,
-      TRUE ~ 0
-    ),
-
-    interaction_effect = 0,
-    summed_effect = estimate
-  ) %>%
-  select(
-    Factor,
-    log_ratio_effect,
-    category_effect,
-    interaction_effect,
-    summed_effect
-  )
-
-interaction_tab <- interactions %>%
-  rowwise() %>%
-  mutate(
-    log_ratio_effect = log_ratio_est,
-
-    category_effect = case_when(
-      grepl("Censoring", Factor) ~
-        category_effects$estimate[grepl("^Censoring", category_effects$Factor)][1],
-
-      grepl("Methods", Factor) ~
-        category_effects$estimate[grepl("^Methods", category_effects$Factor)][1],
-
-      grepl("Population", Factor) ~
-        category_effects$estimate[grepl("^Population", category_effects$Factor)][1],
-
-      TRUE ~ 0
-    ),
-
-    interaction_effect = estimate,
-
-    summed_effect = log_ratio_effect +
-                    category_effect +
-                    interaction_effect
-  ) %>%
-  ungroup() %>%
-  select(
-    Factor,
-    log_ratio_effect,
-    category_effect,
-    interaction_effect,
-    summed_effect
-  )
-
-final_table <- bind_rows(
-  non_interaction_tab,
-  interaction_tab
-)
-final_table <- final_table %>%
-  mutate(across(where(is.numeric), ~ round(.x, 2)))
-
-colnames(final_table)=c("Variable","Log-ratio effect", "Category effect", "Interaction effect", "Total effect estimate")
-
-
-
-kable(final_table, booktabs = TRUE, align = c("l", rep("c", 6)))
+# #| warning: false
+# coefs <- tidy(model_TBE_dummycat_inter)
+# colnames(coefs)[which(colnames(coefs)=="term")]="Factor"
+# library(broom.mixed)
+# 
+# 
+# non_interactions <- coefs %>%
+#   filter(!grepl(":", Factor)) %>%          
+#   filter(effect == "fixed") %>%           
+#   select(
+#     Factor,
+#     estimate
+#   )
+# 
+# interactions <- coefs %>%
+#   filter(grepl(":", Factor)) %>%          
+#   select(
+#     Factor,
+#     estimate
+#   )
+# 
+# tab=rbind(non_interactions,interactions)
+# 
+# log_ratio_est <- non_interactions %>%
+#   filter(Factor == "log_ratio") %>%
+#   pull(estimate)
+# 
+# category_effects <- non_interactions %>%
+#   filter(grepl("^Censoring|^Methods|^Population", Factor)) %>%
+#   select(Factor, estimate)
+# 
+# non_interaction_tab <- non_interactions %>%
+#   mutate(
+#     log_ratio_effect = ifelse(Factor == "log_ratio", estimate, 0),
+# 
+#     category_effect = case_when(
+#       grepl("^Censoring", Factor) ~ estimate,
+#       grepl("^Methods", Factor) ~ estimate,
+#       grepl("^Population", Factor) ~ estimate,
+#       TRUE ~ 0
+#     ),
+# 
+#     interaction_effect = 0,
+#     summed_effect = estimate
+#   ) %>%
+#   select(
+#     Factor,
+#     log_ratio_effect,
+#     category_effect,
+#     interaction_effect,
+#     summed_effect
+#   )
+# 
+# interaction_tab <- interactions %>%
+#   rowwise() %>%
+#   mutate(
+#     log_ratio_effect = log_ratio_est,
+# 
+#     category_effect = case_when(
+#       grepl("Censoring", Factor) ~
+#         category_effects$estimate[grepl("^Censoring", category_effects$Factor)][1],
+# 
+#       grepl("Methods", Factor) ~
+#         category_effects$estimate[grepl("^Methods", category_effects$Factor)][1],
+# 
+#       grepl("Population", Factor) ~
+#         category_effects$estimate[grepl("^Population", category_effects$Factor)][1],
+# 
+#       TRUE ~ 0
+#     ),
+# 
+#     interaction_effect = estimate,
+# 
+#     summed_effect = log_ratio_effect +
+#                     category_effect +
+#                     interaction_effect
+#   ) %>%
+#   ungroup() %>%
+#   select(
+#     Factor,
+#     log_ratio_effect,
+#     category_effect,
+#     interaction_effect,
+#     summed_effect
+#   )
+# 
+# final_table <- bind_rows(
+#   non_interaction_tab,
+#   interaction_tab
+# )
+# final_table <- final_table %>%
+#   mutate(across(where(is.numeric), ~ round(.x, 2)))
+# 
+# colnames(final_table)=c("Variable","Log-ratio effect", "Category effect", "Interaction effect", "Total effect estimate")
+# 
+# 
+# 
+# kable(final_table, booktabs = TRUE, align = c("l", rep("c", 6)))
 ```
 
 Those show a great decrease in the strength of the estimate for the logarithm of the ratio, but an increase for the estimates of the interaction, with both going in the same direction.
@@ -902,99 +902,99 @@ summ(model_OS_inter,model.info=FALSE)
 The simplified interpretation table is the following:
 
 ```{r Simplified interpretation OS}
-coefs <- tidy(model_OS_inter)
-colnames(coefs)[which(colnames(coefs)=="term")]="Factor"
-
-non_interactions <- coefs %>%
-  filter(!grepl(":", Factor)) %>%          
-  filter(effect == "fixed") %>%           
-  select(
-    Factor,
-    estimate
-  )
-
-interactions <- coefs %>%
-  filter(grepl(":", Factor)) %>%          
-  select(
-    Factor,
-    estimate
-  )
-
-tab=rbind(non_interactions,interactions)
-
-log_ratio_est <- non_interactions %>%
-  filter(Factor == "log_ratio") %>%
-  pull(estimate)
-
-category_effects <- non_interactions %>%
-  filter(grepl("^Censoring|^Methods|^Population", Factor)) %>%
-  select(Factor, estimate)
-
-non_interaction_tab <- non_interactions %>%
-  mutate(
-    log_ratio_effect = ifelse(Factor == "log_ratio", estimate, 0),
-
-    category_effect = case_when(
-      grepl("^Censoring", Factor) ~ estimate,
-      grepl("^Methods", Factor) ~ estimate,
-      grepl("^Population", Factor) ~ estimate,
-      TRUE ~ 0
-    ),
-
-    interaction_effect = 0,
-    summed_effect = estimate
-  ) %>%
-  select(
-    Factor,
-    log_ratio_effect,
-    category_effect,
-    interaction_effect,
-    summed_effect
-  )
-
-interaction_tab <- interactions %>%
-  rowwise() %>%
-  mutate(
-    log_ratio_effect = log_ratio_est,
-
-    category_effect = case_when(
-      grepl("Censoring", Factor) ~
-        category_effects$estimate[grepl("^Censoring", category_effects$Factor)][1],
-
-      grepl("Methods", Factor) ~
-        category_effects$estimate[grepl("^Methods", category_effects$Factor)][1],
-
-      grepl("Population", Factor) ~
-        category_effects$estimate[grepl("^Population", category_effects$Factor)][1],
-
-      TRUE ~ 0
-    ),
-
-    interaction_effect = estimate,
-
-    summed_effect = log_ratio_effect +
-                    category_effect +
-                    interaction_effect
-  ) %>%
-  ungroup() %>%
-  select(
-    Factor,
-    log_ratio_effect,
-    category_effect,
-    interaction_effect,
-    summed_effect
-  )
-
-final_table <- bind_rows(
-  non_interaction_tab,
-  interaction_tab
-)
-final_table <- final_table %>%
-  mutate(across(where(is.numeric), ~ round(.x, 2)))
-
-colnames(final_table)=c("Variable","Log-ratio effect", "Category effect", "Interaction effect", "Total effect estimate")
-
-kable(final_table, booktabs = TRUE, align = c("l", rep("c", 6)))
+# coefs <- tidy(model_OS_inter)
+# colnames(coefs)[which(colnames(coefs)=="term")]="Factor"
+# 
+# non_interactions <- coefs %>%
+#   filter(!grepl(":", Factor)) %>%          
+#   filter(effect == "fixed") %>%           
+#   select(
+#     Factor,
+#     estimate
+#   )
+# 
+# interactions <- coefs %>%
+#   filter(grepl(":", Factor)) %>%          
+#   select(
+#     Factor,
+#     estimate
+#   )
+# 
+# tab=rbind(non_interactions,interactions)
+# 
+# log_ratio_est <- non_interactions %>%
+#   filter(Factor == "log_ratio") %>%
+#   pull(estimate)
+# 
+# category_effects <- non_interactions %>%
+#   filter(grepl("^Censoring|^Methods|^Population", Factor)) %>%
+#   select(Factor, estimate)
+# 
+# non_interaction_tab <- non_interactions %>%
+#   mutate(
+#     log_ratio_effect = ifelse(Factor == "log_ratio", estimate, 0),
+# 
+#     category_effect = case_when(
+#       grepl("^Censoring", Factor) ~ estimate,
+#       grepl("^Methods", Factor) ~ estimate,
+#       grepl("^Population", Factor) ~ estimate,
+#       TRUE ~ 0
+#     ),
+# 
+#     interaction_effect = 0,
+#     summed_effect = estimate
+#   ) %>%
+#   select(
+#     Factor,
+#     log_ratio_effect,
+#     category_effect,
+#     interaction_effect,
+#     summed_effect
+#   )
+# 
+# interaction_tab <- interactions %>%
+#   rowwise() %>%
+#   mutate(
+#     log_ratio_effect = log_ratio_est,
+# 
+#     category_effect = case_when(
+#       grepl("Censoring", Factor) ~
+#         category_effects$estimate[grepl("^Censoring", category_effects$Factor)][1],
+# 
+#       grepl("Methods", Factor) ~
+#         category_effects$estimate[grepl("^Methods", category_effects$Factor)][1],
+# 
+#       grepl("Population", Factor) ~
+#         category_effects$estimate[grepl("^Population", category_effects$Factor)][1],
+# 
+#       TRUE ~ 0
+#     ),
+# 
+#     interaction_effect = estimate,
+# 
+#     summed_effect = log_ratio_effect +
+#                     category_effect +
+#                     interaction_effect
+#   ) %>%
+#   ungroup() %>%
+#   select(
+#     Factor,
+#     log_ratio_effect,
+#     category_effect,
+#     interaction_effect,
+#     summed_effect
+#   )
+# 
+# final_table <- bind_rows(
+#   non_interaction_tab,
+#   interaction_tab
+# )
+# final_table <- final_table %>%
+#   mutate(across(where(is.numeric), ~ round(.x, 2)))
+# 
+# colnames(final_table)=c("Variable","Log-ratio effect", "Category effect", "Interaction effect", "Total effect estimate")
+# 
+# kable(final_table, booktabs = TRUE, align = c("l", rep("c", 6)))
 ```
 
 In this case, the fixed-effect model matrix resulted rank deficient and so the 2 coefficients for the "Population" category were dropped.
@@ -1046,9 +1046,48 @@ intercept_TBE2<-coeff_TBE[1,2]
 slope_TBE1<- coeff_TBE[2,1]
 slope_TBE2<- coeff_TBE[2,2]
 
+
+
 p_main_TBE+
   geom_abline(intercept = intercept_TBE1, slope = slope_TBE1, color="deepskyblue2", linetype="dashed", linewidth=0.9)+
+  geom_abline(intercept = intercept_TBE2, slope = slope_TBE2, color="firebrick1", linetype="dashed", linewidth=0.9)#+
+  # scale_color_manual(limits = names(color_df$the_colors, values = color_df$the_colors)
+
+  
+```
+
+```{r}
+library(gridExtra)
+library(grid)
+
+components <- c("Component 1", "Component 2")
+colors <- c("deepskyblue2", "firebrick1")
+linetypes <- c("dashed", "dashed")
+
+# Create the legend grob
+line_legend <- legendGrob(
+  labels = components,
+  pch = NA,  # no points
+  gp = gpar(
+    col = colors,       # line colors
+    lwd = 2,            # line width
+    lty = c(2, 2)       # dashed lines
+  )
+)
+
+
+p_main_TBE_no_legend <- p_main_TBE + theme(legend.position = "none")+
+  geom_abline(intercept = intercept_TBE1, slope = slope_TBE1, color="deepskyblue2", linetype="dashed", linewidth=0.9)+
   geom_abline(intercept = intercept_TBE2, slope = slope_TBE2, color="firebrick1", linetype="dashed", linewidth=0.9)
+grid.arrange(
+  p_main_TBE_no_legend,
+  line_legend,
+  ncol = 2,                     # plot on left, legend on right
+  widths = c(4, 1)              # adjust relative sizes
+)
+
+library(gridExtra)
+library(grid)
 ```
 
 ```{r Distributions of categories TBE}
@@ -1103,68 +1142,70 @@ We first looked at the study IDs of the sensitivity analyses in each component a
 We proceeded to look at the presence of the various categories of sensitivity analysis in the components. When looking at the percentage of each category over the total in each component, we obtain the following results:
 
 ```{r Table TBE generic distribution}
-kable(tab_TBE, booktabs = TRUE, align = c("l", rep("c", 6)))
+#kable(tab_TBE, booktabs = TRUE, align = c("l", rep("c", 6)))
 ```
 
 This shows first of all that the first component has a much higher number of elements than the second component and, among those elements, it tends to have a higher number of sensitivity analyses based on censoring, a slightly smaller number of analyses based on methods and a very minimum amount of those based on population. The second component has instead percentages for the Censoring and Methods categories closer to each other and still a very low one for the population one. If we have a closer look at how the different categories are distributed in each component we get very close percentages for Censoring, slightly different ones for Methods and around a 10 percentage point for Population, we we can see from this table:
 
 ```{r Table distribution per component TBE}
-kable(tab_rel_TBE, booktabs = TRUE, align = c("l", rep("c", 6)))
+# kable(tab_rel_TBE, booktabs = TRUE, align = c("l", rep("c", 6)))
 ```
 
 We also looked at how the categories are distributed across the component we obtain the following:
 
 ```{r Distribution of categories across  components TBE}
-n_cens=length(which(dif_TBE_clean$Censoring=="Yes"))
-n_meth=length(which(dif_TBE_clean$Methods=="Yes"))
-n_pop=length(which(dif_TBE_clean$Population=="Yes"))
-
-tab_rel_meth_TBE=tab
-tab_rel_meth_TBE$Censoring=(tab_rel_meth_TBE$Censoring/n_cens)*100
-tab_rel_meth_TBE$Methods=(tab_rel_meth_TBE$Methods/n_meth)*100
-tab_rel_meth_TBE$Population=(tab_rel_meth_TBE$Population/n_pop)*100
-tab_rel_meth_TBE=round(tab_rel_meth_TBE, digits = 3)
-tab_rel_meth_TBE[] <- lapply(tab_rel_meth_TBE, paste0, '%')
-
-
-tab_TBE_transpose = as.data.frame(t(tab_rel_meth_TBE))
-
-kable(tab_TBE_transpose, booktabs = TRUE, align = c("l", rep("c", 6)))
+# n_cens=length(which(dif_TBE_clean$Censoring=="Yes"))
+# n_meth=length(which(dif_TBE_clean$Methods=="Yes"))
+# n_pop=length(which(dif_TBE_clean$Population=="Yes"))
+# 
+# tab_rel_meth_TBE=tab
+# tab_rel_meth_TBE$Censoring=(tab_rel_meth_TBE$Censoring/n_cens)*100
+# tab_rel_meth_TBE$Methods=(tab_rel_meth_TBE$Methods/n_meth)*100
+# tab_rel_meth_TBE$Population=(tab_rel_meth_TBE$Population/n_pop)*100
+# tab_rel_meth_TBE=round(tab_rel_meth_TBE, digits = 3)
+# tab_rel_meth_TBE[] <- lapply(tab_rel_meth_TBE, paste0, '%')
+# 
+# 
+# tab_TBE_transpose = as.data.frame(t(tab_rel_meth_TBE))
+# 
+# kable(tab_TBE_transpose, booktabs = TRUE, align = c("l", rep("c", 6)))
 ```
 
 ```{r}
-library(tidyr)
-library(dplyr)
-library(ggbeeswarm)
-
-pip_long <- red_clus_TBE %>%
-  pivot_longer(
-    cols = starts_with("post_C"),
-    names_to = "Component",
-    values_to = "PIP"
-  ) %>%
-  mutate(Component = factor(Component, levels = c("post_C1", "post_C2")))
-
-plot_component <- function(df, variable, component) {
-  df_sub <- df %>% filter(Component == component)
-  
-  ggplot(df_sub, aes_string(x = variable, y = "PIP", fill = variable)) +
-    geom_boxplot(width = 0.6, outlier.shape = NA, alpha = 0.4) +
-    geom_quasirandom(aes_string(color = variable),
-                     width = 0.15, alpha = 0.6, size = 1.5) +
-    scale_fill_manual(values = c("Yes" = "blue", "No" = "red")) +
-    scale_color_manual(values = c("Yes" = "blue", "No" = "red")) +
-    labs(
-      x = variable,
-      y = "Posterior Probability",
-      title = paste("Posterior Probabilities for", component, "by", variable)
-    ) +
-    theme_minimal()
-}
-
-# Example usage:
-plot_component(pip_long, "Censoring", "post_C1")
-plot_component(pip_long, "Methods", "post_C2")
+# #| include: false
+# #| output: false
+# library(tidyr)
+# library(dplyr)
+# library(ggbeeswarm)
+# 
+# pip_long <- red_clus_TBE %>%
+#   pivot_longer(
+#     cols = starts_with("post_C"),
+#     names_to = "Component",
+#     values_to = "PIP"
+#   ) %>%
+#   mutate(Component = factor(Component, levels = c("post_C1", "post_C2")))
+# 
+# plot_component <- function(df, variable, component) {
+#   df_sub <- df %>% filter(Component == component)
+#   
+#   ggplot(df_sub, aes_string(x = variable, y = "PIP", fill = variable)) +
+#     geom_boxplot(width = 0.6, outlier.shape = NA, alpha = 0.4) +
+#     geom_quasirandom(aes_string(color = variable),
+#                      width = 0.15, alpha = 0.6, size = 1.5) +
+#     scale_fill_manual(values = c("Yes" = "blue", "No" = "red")) +
+#     scale_color_manual(values = c("Yes" = "blue", "No" = "red")) +
+#     labs(
+#       x = variable,
+#       y = "Posterior Probability",
+#       title = paste("Posterior Probabilities for", component, "by", variable)
+#     ) +
+#     theme_minimal()
+# }
+# 
+# # Example usage:
+# plot_component(pip_long, "Censoring", "post_C1")
+# plot_component(pip_long, "Methods", "post_C2")
 
 ```
 
@@ -1194,66 +1235,89 @@ pip_long_facet <- pip_long %>%
 pip_long_facet$Component <- factor(pip_long_facet$Component,
                                    levels = c("post_C1", "post_C2"),
                                    labels = c("Component 1", "Component 2"))
-
-
-#ggplot(pip_long_facet, aes(x = Group, y = PIP, fill = Group)) + geom_boxplot(width = 0.6, outlier.shape = NA, alpha = 0.4, position = position_dodge(0.8)) + geom_quasirandom(aes(color = Group), width = 0.15, alpha = 0.6, size = 1.5, dodge.width = 0.8) + scale_fill_manual(values = c("Yes" = "blue", "No" = "red")) + scale_color_manual(values = c("Yes" = "blue", "No" = "red")) + facet_grid(Component ~ Variable, scales = "free_x") + labs(x = "", y = "Posterior Probability", title = "Posterior Probabilities by Study Variables and Components") + theme_minimal() + theme( strip.text = element_text(face = "bold"), axis.text.x = element_text(angle = 0, hjust = 0.5) )
-```
-
-```{r}
-ggplot(pip_long_facet, aes(x = Group, y = PIP, fill = Group)) +
-  geom_boxplot(
-    width = 0.6, 
-    outlier.shape = NA, 
-    alpha = 0.4, 
-    position = position_dodge(0.8)
-  ) +
-  geom_quasirandom(
-    aes(color = Group),
-    width = 0.15, alpha = 0.6, size = 1.5, dodge.width = 0.8
-  ) +
-  scale_fill_manual(values = c("Yes" = "#79CDCD", "No" = "indianred3")) +
-  scale_color_manual(values = c("Yes" = "#79CDCD", "No" = "indianred3")) +
-  facet_grid(Component ~ Variable, scales = "free_x") +
-  labs(
-    x = "", 
-    y = "Posterior Probability", 
-    title = "Posterior Probabilities by Study Variables and Components"
-  ) +
-  theme_minimal() +
-  theme(
-    strip.text = element_text(face = "bold"),
-    axis.text.x = element_text(angle = 0, hjust = 0.5),
-    panel.spacing = unit(1.2, "lines")
-  ) +
-  # Add a full-width horizontal divider between Component 1 and Component 2
-  annotation_custom(
-    grob = linesGrob(gp = gpar(col = "black", lwd = 0.5)), 
-    ymin = -Inf, ymax = -Inf, 
-    xmin = -Inf, xmax = Inf
-  )
-
-
-```
-
-```{r}
 pip_yes <- pip_long_facet %>% filter(Group == "Yes")
-ggplot(pip_yes, aes(x = Variable, y = PIP, fill = Component, color = Component)) +
+
+pip_yes_component1 <- pip_yes %>% filter(Component == "Component 1")
+
+ggplot(pip_yes_component1, aes(x = Variable, y = PIP, fill = Component, color = Component)) +
   geom_boxplot(width = 0.6, outlier.shape = NA, alpha = 0.4, position = position_dodge(0.8)) +
   geom_quasirandom(width = 0.15, alpha = 0.6, size = 1.5, dodge.width = 0.8) +
-  scale_fill_manual(values = c("Component 1" = "#00C5CD", "Component 2" = "#FF6347")) +
-  scale_color_manual(values = c("Component 1" = "#00C5CD", "Component 2" = "#FF6347")) +
+  scale_fill_manual(
+    values = c("Component 1" = "deepskyblue2"),
+    drop = FALSE
+  ) +
+  scale_color_manual(
+    values = c("Component 1" = "deepskyblue2"),
+    drop = FALSE
+  ) +
   labs(
     x = "Study Variable",
     y = "Posterior Inclusion Probability",
-    title = "Posterior Inclusion Probabilities by Component for each category"
-  ) +
-  theme_minimal() +
-  theme(
-    axis.text.x = element_text(angle = 0, hjust = 0.5),
-    legend.position = "top",
-    legend.title = element_blank()
-  )
+    title = "Posterior Inclusion Probabilities in TBE for each category in Component 1"
+)+ theme(legend.position = "none")
 
+  
+
+```
+
+```{r}
+# ggplot(pip_long_facet, aes(x = Group, y = PIP, fill = Group)) +
+#   geom_boxplot(
+#     width = 0.6, 
+#     outlier.shape = NA, 
+#     alpha = 0.4, 
+#     position = position_dodge(0.8)
+#   ) +
+#   geom_quasirandom(
+#     aes(color = Group),
+#     width = 0.15, alpha = 0.6, size = 1.5, dodge.width = 0.8
+#   ) +
+#   scale_fill_manual(values = c("Yes" = "#79CDCD", "No" = "indianred3")) +
+#   scale_color_manual(values = c("Yes" = "#79CDCD", "No" = "indianred3")) +
+#   facet_grid(Component ~ Variable, scales = "free_x") +
+#   labs(
+#     x = "", 
+#     y = "Posterior Probability", 
+#     title = "Posterior Probabilities by Study Variables and Components"
+#   ) +
+#   theme_minimal() +
+#   theme(
+#     strip.text = element_text(face = "bold"),
+#     axis.text.x = element_text(angle = 0, hjust = 0.5),
+#     panel.spacing = unit(1.2, "lines")
+#   ) +
+#   # Add a full-width horizontal divider between Component 1 and Component 2
+#   annotation_custom(
+#     grob = linesGrob(gp = gpar(col = "black", lwd = 0.5)), 
+#     ymin = -Inf, ymax = -Inf, 
+#     xmin = -Inf, xmax = Inf
+#   )
+
+
+```
+
+```{r}
+# pip_yes <- pip_long_facet %>% filter(Group == "Yes")
+# ggplot(pip_yes, aes(x = Variable, y = PIP, fill = Component, color = Component)) +
+#   geom_boxplot(width = 0.6, outlier.shape = NA, alpha = 0.4, position = position_dodge(0.8)) +
+#   geom_quasirandom(width = 0.15, alpha = 0.6, size = 1.5, dodge.width = 0.8) +
+#   scale_fill_manual(values = c("Component 1" = "#00C5CD", "Component 2" = "#FF6347")) +
+#   scale_color_manual(values = c("Component 1" = "#00C5CD", "Component 2" = "#FF6347")) +
+#   labs(
+#     x = "Study Variable",
+#     y = "Posterior Inclusion Probability",
+#     title = "Posterior Inclusion Probabilities by Component for each category"
+#   ) +
+#   theme_minimal() +
+#   theme(
+#     axis.text.x = element_text(angle = 0, hjust = 0.5),
+#     legend.position = "top",
+#     legend.title = element_blank()
+#   )
+
+```
+
+```         
 ```
 
 ```{r Table of results OS M1}
@@ -1290,9 +1354,37 @@ intercept_OS2<-coeff_OS[1,2]
 slope_OS1<- coeff_OS[2,1]
 slope_OS2<- coeff_OS[2,2]
 
-p_main_OS+
+components <- c("Component 1", "Component 2")
+colors <- c("deepskyblue2", "firebrick1")
+linetypes <- c("dashed", "dashed")
+
+# Create the legend grob
+line_legend <- legendGrob(
+  labels = components,
+  pch = NA,  # no points
+  gp = gpar(
+    col = colors,       # line colors
+    lwd = 2,            # line width
+    lty = c(2, 2)       # dashed lines
+  )
+)
+
+
+p_main_OS_no_legend <- p_main_OS + theme(legend.position = "none")+
   geom_abline(intercept = intercept_OS1, slope = slope_OS1, color="deepskyblue2", linetype="dashed", linewidth=0.9)+
   geom_abline(intercept = intercept_OS2, slope = slope_OS2, color="firebrick1", linetype="dashed", linewidth=0.9)
+grid.arrange(
+  p_main_OS_no_legend,
+  line_legend,
+  ncol = 2,                     # plot on left, legend on right
+  widths = c(4, 1)              # adjust relative sizes
+)
+
+
+
+# p_main_OS+
+#   geom_abline(intercept = intercept_OS1, slope = slope_OS1, color="deepskyblue2", linetype="dashed", linewidth=0.9)+
+#   geom_abline(intercept = intercept_OS2, slope = slope_OS2, color="firebrick1", linetype="dashed", linewidth=0.9)
 ```
 
 We looked at the same elements for the FMM for **OS**
@@ -1376,7 +1468,6 @@ kable(tab_OS_transpose, booktabs = TRUE, align = c("l", rep("c", 6)))
 ```
 
 ```{r}
-# Pivot post_C1 and post_C2 long
 pip_long_OS <- red_clus_OS %>%
   pivot_longer(
     cols = starts_with("post_C"),
@@ -1396,41 +1487,82 @@ pip_long_facet_OS <- pip_long_OS %>%
 pip_long_facet_OS$Component <- factor(pip_long_facet_OS$Component,
                                    levels = c("post_C1", "post_C2"),
                                    labels = c("Component 1", "Component 2"))
-
-```
-
-```{r}
+# Filter for only Component 1
 pip_yes_OS <- pip_long_facet_OS %>% filter(Group == "Yes")
-ggplot(pip_yes_OS, aes(x = Variable, y = PIP, fill = Component, color = Component)) +
+pip_one_component_OS <- pip_yes_OS %>% 
+  filter(Component == "Component 2")
+
+ggplot(pip_one_component_OS, aes(x = Variable, y = PIP, fill = Component, color = Component)) +
   geom_boxplot(width = 0.6, outlier.shape = NA, alpha = 0.4, position = position_dodge(0.8)) +
   geom_quasirandom(width = 0.15, alpha = 0.6, size = 1.5, dodge.width = 0.8) +
-  scale_fill_manual(values = c("Component 1" = "#00C5CD", "Component 2" = "#FF6347")) +
-  scale_color_manual(values = c("Component 1" = "#00C5CD", "Component 2" = "#FF6347")) +
+  scale_fill_manual(values = c("Component 2" = "#FF6347")) +
+  scale_color_manual(values = c("Component 2" = "#FF6347")) +
   labs(
     x = "Study Variable",
     y = "Posterior Inclusion Probability",
     title = "Posterior Inclusion Probabilities by Component for each category"
   ) +
   theme_minimal() +
-  theme(
-    axis.text.x = element_text(angle = 0, hjust = 0.5),
-    legend.position = "top",
-    legend.title = element_blank()
-  )
+  theme(legend.position = "none")
 
 ```
+
+```{r}
+# # Pivot post_C1 and post_C2 long
+# pip_long_OS <- red_clus_OS %>%
+#   pivot_longer(
+#     cols = starts_with("post_C"),
+#     names_to = "Component",
+#     values_to = "PIP"
+#   ) %>%
+#   mutate(Component = factor(Component, levels = c("post_C1", "post_C2")))
+# 
+# # Pivot study variables long
+# pip_long_facet_OS <- pip_long_OS %>%
+#   pivot_longer(
+#     cols = c(Censoring, Methods, Population),
+#     names_to = "Variable",
+#     values_to = "Group"
+#   ) %>%
+#   mutate(Group = factor(Group, levels = c("Yes", "No")))
+# pip_long_facet_OS$Component <- factor(pip_long_facet_OS$Component,
+#                                    levels = c("post_C1", "post_C2"),
+#                                    labels = c("Component 1", "Component 2"))
+# 
+# 
+# 
+# pip_yes_OS <- pip_long_facet_OS %>% filter(Group == "Yes")
+# ggplot(pip_yes_OS, aes(x = Variable, y = PIP, fill = Component, color = Component)) +
+#   geom_boxplot(width = 0.6, outlier.shape = NA, alpha = 0.4, position = position_dodge(0.8)) +
+#   geom_quasirandom(width = 0.15, alpha = 0.6, size = 1.5, dodge.width = 0.8) +
+#   scale_fill_manual(values = c("Component 1" = "#00C5CD", "Component 2" = "#FF6347")) +
+#   scale_color_manual(values = c("Component 1" = "#00C5CD", "Component 2" = "#FF6347")) +
+#   labs(
+#     x = "Study Variable",
+#     y = "Posterior Inclusion Probability",
+#     title = "Posterior Inclusion Probabilities by Component for each category"
+#   ) +
+#   theme_minimal() +
+#   theme(
+#     axis.text.x = element_text(angle = 0, hjust = 0.5),
+#     legend.position = "top",
+#     legend.title = element_blank()
+#   )
+
+```
+
 ####Linear mixed model with covariates
+
 ```{r}
 m_TBE_cov=lm(se ~ log_ratio*Censoring+log_ratio*Methods+log_ratio*Population, data = dif_TBE_clean)
 
 summ(m_TBE_cov,model.info=FALSE)
 ```
+
 ```{r}
 m_os_cov=lm(se ~ log_ratio*Censoring+log_ratio*Methods+log_ratio*Population, data = dif_OS_clean)
 summ(m_os_cov,model.info=FALSE)
 ```
-
-
 
 ## Conclusions
 
