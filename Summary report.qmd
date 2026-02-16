@@ -1027,6 +1027,107 @@ colnames(s_exp_tab_TBE) <- c("Variable",
                          "Estimate", "Std. Error", "P-value")
 s_exp_tab_df_TBE <- as.data.frame(s_exp_tab_TBE)
 ```
+```{r}
+component_ids_TBE <- clusters(model_f_TBE)
+post_probs_TBE <- round(posterior(model_f_TBE), 3)
+
+# Convert to a data frame
+post_probs_df_TBE <- as.data.frame(post_probs_TBE)
+colnames(post_probs_df_TBE) <- c("Prob_Component_1", "Prob_Component_2")
+
+# Combine with original data
+component_data_TBE <- bind_cols(
+  dif_TBE_clean %>% select(NCT, se, log_ratio,Methods, Censoring, Population),
+  post_probs_df_TBE,
+  component_ids_TBE
+)%>%
+  mutate(Component = factor(component_ids_TBE))
+```
+```{r Plot only Censoring data}
+plot_data <- component_data_TBE %>%
+  filter(Censoring == "Yes")
+
+ggplot(plot_data,
+       aes(x = log_ratio, y = se, color = Component)) +
+  geom_point(size = 2.5, alpha = 0.8) +
+  theme_minimal() +
+  labs(title = "SE vs Log Ratio (Censoring = Yes)",
+       x = "Log Ratio",
+       y = "SE",
+       color = "Component") +
+  scale_color_manual(values = c("1" = "steelblue",
+                                "2" = "firebrick"))
+```
+```{r Plot only Methods data}
+plot_data <- component_data_TBE %>%
+  filter(Methods == "Yes")
+
+ggplot(plot_data,
+       aes(x = log_ratio, y = se, color = Component)) +
+  geom_point(size = 2.5, alpha = 0.8) +
+  theme_minimal() +
+  labs(title = "SE vs Log Ratio (Methods = Yes)",
+       x = "Log Ratio",
+       y = "SE",
+       color = "Component") +
+  scale_color_manual(values = c("1" = "steelblue",
+                                "2" = "firebrick"))
+```
+```{r Plot only Population data}
+plot_data <- component_data_TBE %>%
+  filter(Population == "Yes")
+
+ggplot(plot_data,
+       aes(x = log_ratio, y = se, color = Component)) +
+  geom_point(size = 2.5, alpha = 0.8) +
+  theme_minimal() +
+  labs(title = "SE vs Log Ratio (Population = Yes)",
+       x = "Log Ratio",
+       y = "SE",
+       color = "Component") +
+  scale_color_manual(values = c("1" = "steelblue",
+                                "2" = "firebrick"))
+```
+```{r Compbine subplot TBE, fig.width=10}
+library(ggplot2)
+library(dplyr)
+
+long_data <- component_data_TBE %>%
+  filter(Censoring == "Yes" |
+         Methods == "Yes" |
+         Population == "Yes") %>%
+  mutate(
+    Category = case_when(
+      Censoring == "Yes" ~ "Censoring",
+      Methods == "Yes" ~ "Methods",
+      Population == "Yes" ~ "Population"
+    )
+  )
+
+ggplot(long_data,
+       aes(x = log_ratio, y = se, color = Component)) +
+  geom_point(size = 2.5, alpha = 0.8) +
+  facet_wrap(~ Category) +
+  theme_minimal() +
+  scale_color_manual(
+    values = c("1" = "#1B4F72",   # dark blue
+               "2" = "#922B21")   # dark red
+  ) +
+  theme(
+    panel.border = element_rect(color = "black",
+                                fill = NA,
+                                linewidth = 0.8),
+    strip.background = element_rect(fill = "grey85",
+                                     color = "black",
+                                     linewidth = 0.8),
+    strip.text = element_text(face = "bold")
+  ) +
+  labs(color = "Component",
+       x = "Log Ratio",
+       y = "SE")
+
+```
+
 
 Among the sensitivity analyses for TBE, we obtained the components with sizes `{r} model_f_TBE@size`. The estimates for the variables of the model were the following:
 
@@ -1124,8 +1225,10 @@ Once the FMM has divided the elements in the two components, we wanted to see if
 NCT1_TBE=as.character(unique(clust_TBE[[1]]$NCT))
 NCT2_TBE=as.character(unique(clust_TBE[[2]]$NCT))
 total_NCT_TBE=as.character(unique(red_clus_TBE$NCT))
-same_TBE=intersect(NCT1_TBE, NCT2_TBE) 
+same_TBE=intersect(NCT1_TBE, NCT2_TBE)
+length(same_TBE)
 diff_TBE=total_NCT_TBE[!total_NCT_TBE %in% same_TBE]
+length(diff_TBE)
 ```
 
 We first looked at the study IDs of the sensitivity analyses in each component and it was possible to see that, out of the `{r} length(unique(total_NCT_TBE))` studies that had sensitivity analyses for TBE, `{r} length(same_TBE)` had some of their sensitivity analyses present in both component and `{r} length(diff_TBE)` had analyses in only one component. This seem to suggest that the component assignation is not related to the study ID.
@@ -1381,6 +1484,109 @@ kable(s_exp_tab_df_OS, booktabs = TRUE, align = c("l", rep("c", 6))) %>%
   add_header_above(c(" " = 1, "Component 1" = 3, "Component 2" = 3))
 
 ```
+```{r}
+component_ids_OS <- clusters(model_f_os)
+post_probs_OS <- round(posterior(model_f_os), 3)
+
+# Convert to a data frame
+post_probs_df_OS <- as.data.frame(post_probs_OS)
+colnames(post_probs_df_OS) <- c("Prob_Component_1", "Prob_Component_2")
+
+# Combine with original data
+component_data_OS <- bind_cols(
+  dif_OS_clean %>% select(NCT, se, log_ratio,Methods, Censoring, Population),
+  post_probs_df_OS, 
+  component_ids_OS
+)%>%
+  mutate(Component = factor(component_ids_OS))
+```
+```{r Plot only Censoring data}
+plot_data <- component_data_OS %>%
+  filter(Censoring == "Yes")
+
+p_cens_OS=ggplot(plot_data,
+       aes(x = log_ratio, y = se, color = Component)) +
+  geom_point(size = 2.5, alpha = 0.8) +
+  theme_minimal() +
+  labs(title = "SE vs Log Ratio (Censoring = Yes)",
+       x = "Log Ratio",
+       y = "SE",
+       color = "Component") +
+  scale_color_manual(values = c("1" = "steelblue",
+                                "2" = "firebrick"))
+```
+```{r Plot only Methods data}
+plot_data <- component_data_OS %>%
+  filter(Methods == "Yes")
+
+p_meth_OS=ggplot(plot_data,
+       aes(x = log_ratio, y = se, color = Component)) +
+  geom_point(size = 2.5, alpha = 0.8) +
+  theme_minimal() +
+  labs(title = "SE vs Log Ratio (Methods = Yes)",
+       x = "Log Ratio",
+       y = "SE",
+       color = "Component") +
+  scale_color_manual(values = c("1" = "steelblue",
+                                "2" = "firebrick"))
+```
+```{r Plot only Population data}
+plot_data <- component_data_OS %>%
+  filter(Population == "Yes")
+
+p_pop_OS=ggplot(plot_data,
+       aes(x = log_ratio, y = se, color = Component)) +
+  geom_point(size = 2.5, alpha = 0.8) +
+  theme_minimal() +
+  labs(title = "SE vs Log Ratio (Population = Yes)",
+       x = "Log Ratio",
+       y = "SE",
+       color = "Component") +
+  scale_color_manual(values = c("1" = "steelblue",
+                                "2" = "firebrick"))
+```
+```{r Combine subplot OS, fig.width=10}
+library(tidyr)
+library(dplyr)
+
+long_data <- component_data_OS %>%
+  filter(Censoring == "Yes" |
+         Methods == "Yes" |
+         Population == "Yes") %>%
+  mutate(
+    Category = case_when(
+      Censoring == "Yes" ~ "Censoring",
+      Methods == "Yes" ~ "Methods",
+      Population == "Yes" ~ "Population"
+    )
+  )
+
+ggplot(long_data,
+       aes(x = log_ratio, y = se, color = Component)) +
+  geom_point(size = 2.5, alpha = 0.8) +
+  facet_wrap(~ Category) +
+  theme_minimal() +
+  scale_color_manual(
+    values = c("1" = "#1B4F72",   # dark blue
+               "2" = "#922B21")   # dark red
+  ) +
+  theme(
+    panel.border = element_rect(color = "black",
+                                fill = NA,
+                                linewidth = 0.8),
+    strip.background = element_rect(fill = "grey85",
+                                     color = "black",
+                                     linewidth = 0.8),
+    strip.text = element_text(face = "bold")
+  ) +
+  labs(color = "Component",
+       x = "Log Ratio",
+       y = "SE")
+
+
+```
+
+
 
 If we run the same finite mixture model for **OS** we can see a very large difference bewteen the estimate of the logarithm of the ratio os HRs as it is `{r} s_exp_tab[2,2]` for the first component and `{r} s_exp_tab[2,5]` in the second.
 
