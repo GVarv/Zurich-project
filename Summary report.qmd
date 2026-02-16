@@ -1008,33 +1008,33 @@ We first run a FMM for **TBE** with two components.
 ```{r TBE FMM}
 #| warning: false
 library(flexmix)
-
-model_f_TBE=flexmix(se ~ log_ratio, data = dif_TBE_clean, k=2)
+set.seed(4) #We had to add a seed because instability of the model
+model_f_TBE=flexmix(se ~ log_ratio, data = dif_TBE_clean, k=2,control = list(nrep = 10) )
 summary(model_f_TBE)
-s_exp=flexmix::refit(model_f_TBE)
-s_c1=as.data.frame(s_exp@components[[1]][["Comp.1"]])
-s_c1=s_c1 %>% mutate_if(is.numeric, ~round(., 5))
-s_c2=as.data.frame(s_exp@components[[1]][["Comp.2"]])
-s_c2=s_c2 %>% mutate_if(is.numeric, ~round(., 5))
+s_exp_TBE=flexmix::refit(model_f_TBE)
+s_c1_TBE=as.data.frame(s_exp_TBE@components[[1]][["Comp.1"]])
+s_c1_TBE=s_c1_TBE %>% mutate_if(is.numeric, ~round(., 5))
+s_c2_TBE=as.data.frame(s_exp_TBE@components[[1]][["Comp.2"]])
+s_c2_TBE=s_c2_TBE %>% mutate_if(is.numeric, ~round(., 5))
 
-s_exp_tab <- cbind(
+s_exp_tab_TBE <- cbind(
   Variable = rownames(s_c1),
-  s_c1$Estimate, s_c1$`Std. Error`, s_c1$`Pr(>|z|)`,
-  s_c2$Estimate, s_c2$`Std. Error`, s_c2$`Pr(>|z|)`
+  s_c1_TBE$Estimate, s_c1_TBE$`Std. Error`, s_c1_TBE$`Pr(>|z|)`,
+  s_c2_TBE$Estimate, s_c2_TBE$`Std. Error`, s_c2_TBE$`Pr(>|z|)`
 )
-colnames(s_exp_tab) <- c("Variable",
+colnames(s_exp_tab_TBE) <- c("Variable",
                          "Estimate", "Std. Error", "P-value",
                          "Estimate", "Std. Error", "P-value")
-s_exp_tab_df <- as.data.frame(s_exp_tab)
+s_exp_tab_df_TBE <- as.data.frame(s_exp_tab_TBE)
 ```
 
 Among the sensitivity analyses for TBE, we obtained the components with sizes `{r} model_f_TBE@size`. The estimates for the variables of the model were the following:
 
 ```{r Components table TBE}
 # Create kable with multi-level header
-kable(s_exp_tab_df, booktabs = TRUE, align = c("l", rep("c", 6))) %>%
+kable(s_exp_tab_df_TBE, booktabs = TRUE, align = c("l", rep("c", 6))) %>%
   add_header_above(c(" " = 1, "Component 1" = 3, "Component 2" = 3))
-#print(s_exp_tab_df)
+print(s_exp_tab_df_TBE)
 ```
 
 These results show a very strong difference in the strength of the estimate for the logarithm of the ratio between the components. We plotted both regression on the scatter plot.
@@ -1046,20 +1046,12 @@ intercept_TBE2<-coeff_TBE[1,2]
 slope_TBE1<- coeff_TBE[2,1]
 slope_TBE2<- coeff_TBE[2,2]
 
+# p_main_TBE+
+#   geom_abline(intercept = intercept_TBE1, slope = slope_TBE1, color="deepskyblue2", linetype="dashed", linewidth=0.9)+
+#   geom_abline(intercept = intercept_TBE2, slope = slope_TBE2, color="firebrick1", linetype="dashed", linewidth=0.9)
 
-
-p_main_TBE+
-  geom_abline(intercept = intercept_TBE1, slope = slope_TBE1, color="deepskyblue2", linetype="dashed", linewidth=0.9)+
-  geom_abline(intercept = intercept_TBE2, slope = slope_TBE2, color="firebrick1", linetype="dashed", linewidth=0.9)#+
-  # scale_color_manual(limits = names(color_df$the_colors, values = color_df$the_colors)
-
-  
-```
-
-```{r}
 library(gridExtra)
 library(grid)
-
 components <- c("Component 1", "Component 2")
 colors <- c("deepskyblue2", "firebrick1")
 linetypes <- c("dashed", "dashed")
@@ -1082,13 +1074,12 @@ p_main_TBE_no_legend <- p_main_TBE + theme(legend.position = "none")+
 grid.arrange(
   p_main_TBE_no_legend,
   line_legend,
-  ncol = 2,                     # plot on left, legend on right
-  widths = c(4, 1)              # adjust relative sizes
+  ncol = 2,                    
+  widths = c(4, 1)              
 )
 
-library(gridExtra)
-library(grid)
 ```
+
 
 ```{r Distributions of categories TBE}
 inc=c("NCT","Censoring", "Methods", "Population")
@@ -1259,6 +1250,43 @@ ggplot(pip_yes_component1, aes(x = Variable, y = PIP, fill = Component, color = 
   
 
 ```
+```{r}
+ggplot(pip_yes_component1, aes(x = Variable, y = PIP, fill = Component, color = Component)) +
+  # Regular boxplot without median line
+  geom_boxplot(
+    width = 0.6,
+    outlier.shape = NA,
+    alpha = 0.4,
+    position = position_dodge(0.8),
+    show.legend = FALSE
+  ) +
+  # Overlay mean as the "middle" line
+  stat_summary(
+    fun = mean,
+    geom = "crossbar",
+    width = 0.6,
+    position = position_dodge(0.8),
+    color = "black",   # or Component color if you prefer
+    fatten = 1
+  ) +
+  geom_quasirandom(width = 0.15, alpha = 0.6, size = 1.5, dodge.width = 0.8) +
+  scale_fill_manual(
+    values = c("Component 1" = "deepskyblue2"),
+    drop = FALSE
+  ) +
+  scale_color_manual(
+    values = c("Component 1" = "deepskyblue2"),
+    drop = FALSE
+  ) +
+  labs(
+    x = "Study Variable",
+    y = "Posterior Inclusion Probability",
+    title = "Posterior Inclusion Probabilities in TBE for each category in Component 1"
+  ) +
+  theme(legend.position = "none")
+
+```
+
 
 ```{r}
 # ggplot(pip_long_facet, aes(x = Group, y = PIP, fill = Group)) +
@@ -1317,10 +1345,11 @@ ggplot(pip_yes_component1, aes(x = Variable, y = PIP, fill = Component, color = 
 
 ```
 
-```         
-```
+ 
+
 
 ```{r Table of results OS M1}
+set.seed(5)
 model_f_os=flexmix(se ~ log_ratio, data = dif_OS_clean, k=2)
 summary(model_f_os)
 s_exp=flexmix::refit(model_f_os)
@@ -1329,18 +1358,18 @@ s_c1=s_c1 %>% mutate_if(is.numeric, ~round(., 5))
 s_c2=as.data.frame(s_exp@components[[1]][["Comp.2"]])
 s_c2=s_c2 %>% mutate_if(is.numeric, ~round(., 5))
 
-s_exp_tab <- cbind(
+s_exp_tab_OS <- cbind(
   Variable = rownames(s_c1),
   s_c1$Estimate, s_c1$`Std. Error`, s_c1$`Pr(>|z|)`,
   s_c2$Estimate, s_c2$`Std. Error`, s_c2$`Pr(>|z|)`
 )
-colnames(s_exp_tab) <- c("Variable",
+colnames(s_exp_tab_OS) <- c("Variable",
                          "Estimate", "Std. Error", "P-value",
                          "Estimate", "Std. Error", "P-value")
-s_exp_tab_df <- as.data.frame(s_exp_tab)
+s_exp_tab_df_OS <- as.data.frame(s_exp_tab_OS)
 
 # Create kable with multi-level header
-kable(s_exp_tab_df, booktabs = TRUE, align = c("l", rep("c", 6))) %>%
+kable(s_exp_tab_df_OS, booktabs = TRUE, align = c("l", rep("c", 6))) %>%
   add_header_above(c(" " = 1, "Component 1" = 3, "Component 2" = 3))
 
 ```
@@ -1437,34 +1466,34 @@ The study IDs for OS are more divided among the components, since `{r} length(sa
 The distribution of the different categories over the two components is also less uniform as we can see from the following table:
 
 ```{r Distribution across categories and components}
-kable(tab_OS, booktabs = TRUE, align = c("l", rep("c", 6)))
+#kable(tab_OS, booktabs = TRUE, align = c("l", rep("c", 6)))
 ```
 
 This is reflected in the distribution of the different categories in each components:
 
 ```{r Distribution inside components OS}
-kable(tab_rel_OS, booktabs = TRUE, align = c("l", rep("c", 6)))
+#kable(tab_rel_OS, booktabs = TRUE, align = c("l", rep("c", 6)))
 ```
 
 The distribution of the categories across the two components showed a large difference, as we can see from the following table:
 
 ```{r Distribution of categories OS}
-n_cens=length(which(dif_OS_clean$Censoring=="Yes"))
-n_meth=length(which(dif_OS_clean$Methods=="Yes"))
-n_pop=length(which(dif_OS_clean$Population=="Yes"))
-
-tab_rel_meth_OS=tab
-tab_rel_meth_OS$Censoring=(tab_rel_meth_OS$Censoring/n_cens)*100
-tab_rel_meth_OS$Methods=(tab_rel_meth_OS$Methods/n_meth)*100
-tab_rel_meth_OS$Population=(tab_rel_meth_OS$Population/n_pop)*100
-tab_rel_meth_OS=round(tab_rel_meth_OS, digits = 3)
-tab_rel_meth_OS[] <- lapply(tab_rel_meth_OS, paste0, '%')
-
-
-
-tab_OS_transpose = as.data.frame(t(tab_rel_meth_OS))
-
-kable(tab_OS_transpose, booktabs = TRUE, align = c("l", rep("c", 6)))
+# n_cens=length(which(dif_OS_clean$Censoring=="Yes"))
+# n_meth=length(which(dif_OS_clean$Methods=="Yes"))
+# n_pop=length(which(dif_OS_clean$Population=="Yes"))
+# 
+# tab_rel_meth_OS=tab
+# tab_rel_meth_OS$Censoring=(tab_rel_meth_OS$Censoring/n_cens)*100
+# tab_rel_meth_OS$Methods=(tab_rel_meth_OS$Methods/n_meth)*100
+# tab_rel_meth_OS$Population=(tab_rel_meth_OS$Population/n_pop)*100
+# tab_rel_meth_OS=round(tab_rel_meth_OS, digits = 3)
+# tab_rel_meth_OS[] <- lapply(tab_rel_meth_OS, paste0, '%')
+# 
+# 
+# 
+# tab_OS_transpose = as.data.frame(t(tab_rel_meth_OS))
+# 
+# kable(tab_OS_transpose, booktabs = TRUE, align = c("l", rep("c", 6)))
 ```
 
 ```{r}
