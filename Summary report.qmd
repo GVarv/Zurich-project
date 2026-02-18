@@ -1833,6 +1833,17 @@ summ(m_TBE_cov,model.info=FALSE)
 m_os_cov=lm(se ~ log_ratio*Censoring+log_ratio*Methods+log_ratio*Population, data = dif_OS_clean)
 summ(m_os_cov,model.info=FALSE)
 ```
+## Case studies
+To illustrate the idea behind the choice of type of sensitivity analysis as covariates we could find some studies that show the link between the ratio of sensitivity analyses and the one of HRs.
+```{r}
+View(dif_TBE_clean[order(dif_TBE_clean$se,dif_TBE_clean$log_ratio, decreasing = TRUE ),])
+hse_llr=dif_TBE_clean[dif_TBE_clean$se>1.1 & dif_TBE_clean$log_ratio<(-0.1), ]
+lse_hlr=dif_TBE_clean[dif_TBE_clean$se<0.9 & dif_TBE_clean$log_ratio>0.1,]
+hse_trials=unique(high_se$NCT)
+table(hse_llr$Type.of.sensitivity.analysis)
+table(lse_hlr$Type.of.sensitivity.analysis)
+```
+
 
 ## Conclusions
 
