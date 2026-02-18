@@ -1835,14 +1835,29 @@ summ(m_os_cov,model.info=FALSE)
 ```
 ## Case studies
 To illustrate the idea behind the choice of type of sensitivity analysis as covariates we could find some studies that show the link between the ratio of sensitivity analyses and the one of HRs.
+
 ```{r}
-View(dif_TBE_clean[order(dif_TBE_clean$se,dif_TBE_clean$log_ratio, decreasing = TRUE ),])
+
+hse_llr_OS=dif_OS_clean[(dif_OS_clean$se>1.1 & dif_OS_clean$log_ratio<(-0.1)), ]
+lse_hlr_OS=dif_OS_clean[(dif_OS_clean$se<0.9 & dif_OS_clean$log_ratio>0.1),]
+lse_trials_OS=unique(lse_hlr_OS$NCT)
+hse_trials_OS=unique(hse_hlr_OS$NCT)
+View(data[data$NCT %in% hse_trials_OS & grepl("OS",data$Analysis),])
+View(data[data$NCT %in% lse_trials_OS & grepl("OS",data$Analysis),])
+table(hse_llr_OS$Type.of.sensitivity.analysis)
+table(lse_hlr_OS$Type.of.sensitivity.analysis)
+```
+
+```{r}
 hse_llr=dif_TBE_clean[dif_TBE_clean$se>1.1 & dif_TBE_clean$log_ratio<(-0.1), ]
 lse_hlr=dif_TBE_clean[dif_TBE_clean$se<0.9 & dif_TBE_clean$log_ratio>0.1,]
-hse_trials=unique(high_se$NCT)
-table(hse_llr$Type.of.sensitivity.analysis)
-table(lse_hlr$Type.of.sensitivity.analysis)
+hse_trials=unique(hse_llr$NCT)
+lse_trials=unique(lse_hlr$NCT)
+
+View(data[data$NCT %in% hse_trials & grepl("FS",data$Analysis),])
+View(data[data$NCT %in% lse_trials & grepl("FS",data$Analysis),])
 ```
+
 
 
 ## Conclusions
