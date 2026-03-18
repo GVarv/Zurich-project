@@ -327,6 +327,7 @@ ggplot(df, aes(x = value, fill = group)) +
   geom_histogram(
     position = position_dodge(width = 0.55),  # space between bars
     bins = 15, 
+    width=0.55,
     color = "black", 
     alpha = 0.7
   ) +
@@ -336,6 +337,20 @@ ggplot(df, aes(x = value, fill = group)) +
   #labs(x = "Number of sensitivity analyses", y = "Frequency") +
   theme_minimal()
 
+```
+```{r}
+ggplot(df, aes(x = value, fill = group)) +
+  geom_bar(
+    position = position_dodge(width = 0.9, preserve = "single"),
+    color = "black",
+    alpha = 0.9
+  ) +
+  scale_fill_manual(values = c("OS" = "dodgerblue", "TBE" = "seagreen3")) +
+  scale_x_continuous(breaks = seq(0, 15, by = 1)) +
+  labs(#title = "Frequency of sensitivity analyses per study in OS and TBE",
+       x = "Number of sensitivity analyses", 
+       y = "Frequency") +
+  theme_minimal()
 ```
 
 This plot shows the frequency of sensitivity analyses per endpoint. It includes only the analyses that reported numerical values, but `{r} length(w)` analyses coming from `{r} length(unique(w))`(namely `{r} unique(w)`) have been reported using only statements, while `{r} length(n)` analyses were described in the public documents but did not have any result described (reported in trials `{r} unique(n)`).
@@ -416,6 +431,8 @@ dif_OS_clean$Population <- factor(dif_OS_clean$Population,
 Then we looked at these sensitivity analyses were distributed among the different categories.
 
 ```{r Category frequency}
+table(dif_TBE_clean$Type.of.sensitivity.analysis)
+table(dif_OS_clean$Type.of.sensitivity.analysis)
 freq_OS=as.data.frame(table(dif_OS_clean$Type.of.sensitivity.analysis))
 freq_TBE=as.data.frame(table(dif_TBE_clean$Type.of.sensitivity.analysis))
 
@@ -433,16 +450,17 @@ f_long <- freq_join %>%
 # grouped bar plot
 ggplot(f_long, aes(x = Category, y = Count, fill = Endpoint)) +
   geom_col(
-    position = position_dodge(width = 0.55),  # space between bars, 
+    position = position_dodge(width = 0.55),
+    width=0.55, 
     color = "black") +
   scale_y_continuous(breaks = seq(0, 100, by = 10)) +
   theme_minimal() +
   scale_fill_manual(values = c("OS" = "dodgerblue", "TBE" = "seagreen3"))+
-  labs(title = "OS and TBE per Category",x = "Category",y = "Frequency (%)") +
+  labs(#title = "OS and TBE per Category",
+       x = "Category",y = "Frequency (%)") +
   #labs(x = "Category",y = "Frequency (%)") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
-
 ```{r}
 rel_freq=freq_join
 rel_freq[,"TBE"]=(rel_freq[,"TBE"]/sum(rel_freq["TBE"]))*100
@@ -458,7 +476,8 @@ f_long_rel <- rel_freq %>%
 # grouped bar plot
 ggplot(f_long_rel, aes(x = Category, y = Count, fill = Endpoint)) +
   geom_col(
-    position = position_dodge(width = 0.55),  # space between bars, 
+    position = position_dodge(width = 0.55),
+    width=0.55, # space between bars, 
     color = "black") +
   scale_y_continuous(breaks = seq(0, 100, by = 10)) +
   theme_minimal() +
@@ -466,6 +485,85 @@ ggplot(f_long_rel, aes(x = Category, y = Count, fill = Endpoint)) +
   labs(x = "Category",y = "Frequency (%)") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
+#### Different categories of sensitivity analyses in the same study
+```{r}
+library(dplyr)
+
+# Summary: count of distinct categories per NCT
+category_summary_TBE <- dif_TBE_clean %>%
+  group_by(NCT) %>%
+  summarise(
+    n_categories = n_distinct(Type.of.sensitivity.analysis),
+    #categories = paste(sort(unique(Type.of.sensitivity.analysis)), collapse = " + ")
+  ) %>%
+  arrange(desc(n_categories))
+
+category_summary_OS <- dif_OS_clean %>%
+  group_by(NCT) %>%
+  summarise(
+    n_categories = n_distinct(Type.of.sensitivity.analysis),
+    #categories = paste(sort(unique(Type.of.sensitivity.analysis)), collapse = " + ")
+  ) %>%
+  arrange(desc(n_categories))
+
+
+freq_TBE=as.data.frame(table(category_summary_TBE$n_categories))
+freq_OS=as.data.frame(table(category_summary_OS$n_categories))
+
+freq_join <- merge(freq_OS, freq_TBE, by = "Var1", all = TRUE)
+freq_join[is.na(freq_join)]=0
+colnames(freq_join)=c("Category", "OS", "TBE")
+
+f_long <- freq_join %>%
+  pivot_longer(
+    cols = c(OS, TBE),
+    names_to = "Endpoint",
+    values_to = "Count"
+  )
+
+# grouped bar plot
+ggplot(f_long, aes(x = Category, y = Count, fill = Endpoint)) +
+  geom_col(position = position_dodge(width = 0.65),
+    width = 0.65,  # space between bars, 
+    color = "black") +
+  scale_y_continuous(breaks = seq(0, 20, by = 2)) +
+  theme_minimal() +
+  scale_fill_manual(values = c("OS" = "dodgerblue", "TBE" = "seagreen3"))+
+  labs(#title = "Number of category of sensitivity analysis in the same study",
+       x = "Number of categories",y = "Number of studies") +
+  #labs(x = "Category",y = "Frequency (%)") +
+  theme(axis.text.x = element_text(angle = 0, hjust = 1))
+```
+```{r}
+#| eval: false
+# Step by step to see where it breaks
+
+# Step 1: check distinct pairs
+step1 <- dif_TBE_clean %>%
+  distinct(NCT, Type.of.sensitivity.analysis)
+print(step1)
+
+# Step 2: check collapse per NCT
+step2 <- step1 %>%
+  group_by(NCT) %>%
+  summarise(
+    n_categories = n(),
+    categories = paste(sort(Type.of.sensitivity.analysis), collapse = " + ")
+  )
+print(step2)
+
+# Step 3: final count
+step3 <- step2 %>%
+  group_by(categories) %>%
+  summarise(n_NCTs = n()) %>%
+  arrange(desc(n_NCTs))
+View(step3)
+
+
+step2 %>% filter(NCT == "NCT03734016")  # replace with a known multi-category NCT
+```
+
+
 
 From this histogram, we can see that, while the sensitivity analyses for TBE mostly focused on different censoring rules and slightly less on methods, for OS, the focus of the sensitivity analyses was almost entirely on different methods. In the case of TBE, it is worth keeping in mind that different methods also include changes in the way the disease progression is assessed between investigator-based and Independent Central Review (ICR)-based.
 
@@ -490,7 +588,8 @@ ggplot(df, aes(x = endpoint, y = log_ratio, fill = endpoint)) +
     values = c("OS" = "dodgerblue", "TBE" = "seagreen3"),
   )+
   geom_hline(yintercept = 0, colour="firebrick", lwd=0.7, lty=2)+
-  ggtitle("Logarithm of the difference in HR between primary and sensitivity analyses") +
+  #ggtitle("Logarithm of the difference in HR between primary and sensitivity analyses") +
+  scale_y_continuous(breaks = seq(0, 1, by = 0.2))+
   ylab("") + 
   xlab("") +
   theme(
@@ -499,6 +598,25 @@ ggplot(df, aes(x = endpoint, y = log_ratio, fill = endpoint)) +
     legend.text = element_text(size = 10)
   )
 ```
+```{r}
+ggplot(df, aes(x = endpoint, y = exp(log_ratio), fill = endpoint)) +
+  geom_boxplot() +
+   scale_fill_manual(
+    name = "endpoint", 
+    values = c("OS" = "dodgerblue", "TBE" = "seagreen3"),
+  )+
+  geom_hline(yintercept = 1, colour="firebrick", lwd=0.7, lty=2)+
+  #ggtitle("Logarithm of the difference in HR between primary and sensitivity analyses") +
+  scale_y_continuous(breaks = seq(0, 2, by = 0.2))+
+  ylab("") + 
+  xlab("") +
+  theme(
+    legend.position = "top",             # similar to "topleft"
+    legend.title = element_text(face = "bold"),
+    legend.text = element_text(size = 10)
+  )
+```
+
 
 From both the density plot and the boxplots it is possible to see that, while the differences in TBE concentrate around 0 with narrow quartiles, there are way more outliers than in OS, whose median is slightly below 0 and has wider quartiles, but no outliers.
 
@@ -706,7 +824,9 @@ slope_TBE<- coeff_TBE[2]
 
 p_main_TBE+geom_abline(intercept = intercept_TBE, slope = slope_TBE, color="black", linetype="dashed", linewidth=0.9)
 
-
+round(AIC(m_TBE),2)
+round(BIC(m_TBE),2)
+summary(m_TBE)
 ```
 
 From the output of this model, there seems to be a significant relationship between the two variables that would lead the difference in standard errors to decrease when the difference in HR increases.
@@ -724,7 +844,9 @@ slope_OS<- coeff_OS[2]
 
 p_main_OS+geom_abline(intercept = intercept_OS, slope = slope_OS, color="black", linetype="dashed", linewidth=0.9)
 
-
+round(AIC(m_os),2)
+round(BIC(m_os),2)
+summary(m_os)
 ```
 
 The results for OS seem to show a stronger trend in the same direction as what we had already observed in the model for TBE, but the p-value was much higher, so the results were less significant.
@@ -1821,17 +1943,24 @@ ggplot(pip_one_component_OS, aes(x = Variable, y = PIP, fill = Component, color 
 
 ```
 
-####Linear mixed model with covariates
+####Linear model with covariates
 
 ```{r}
 m_TBE_cov=lm(se ~ log_ratio*Censoring+log_ratio*Methods+log_ratio*Population, data = dif_TBE_clean)
 
 summ(m_TBE_cov,model.info=FALSE)
+round(AIC(m_TBE_cov),2)
+round(BIC(m_TBE_cov),2)
+summary(m_TBE_cov)
 ```
 
 ```{r}
 m_os_cov=lm(se ~ log_ratio*Censoring+log_ratio*Methods+log_ratio*Population, data = dif_OS_clean)
 summ(m_os_cov,model.info=FALSE)
+
+round(AIC(m_os_cov),2)
+round(BIC(m_os_cov),2)
+summary(m_os_cov)
 ```
 ## Case studies
 To illustrate the idea behind the choice of type of sensitivity analysis as covariates we could find some studies that show the link between the ratio of sensitivity analyses and the one of HRs.
