@@ -432,7 +432,14 @@ Then we looked at these sensitivity analyses were distributed among the differen
 
 ```{r Category frequency}
 table(dif_TBE_clean$Type.of.sensitivity.analysis)
+table(dif_TBE_clean$Censoring)
+table(dif_TBE_clean$Methods)
+table(dif_TBE_clean$Population)
+
 table(dif_OS_clean$Type.of.sensitivity.analysis)
+table(dif_OS_clean$Censoring)
+table(dif_OS_clean$Methods)
+table(dif_OS_clean$Population)
 freq_OS=as.data.frame(table(dif_OS_clean$Type.of.sensitivity.analysis))
 freq_TBE=as.data.frame(table(dif_TBE_clean$Type.of.sensitivity.analysis))
 
@@ -1622,7 +1629,7 @@ component_data_OS <- bind_cols(
 )%>%
   mutate(Component = factor(component_ids_OS))
 ```
-```{r Plot only Censoring data}
+```{r }
 plot_data <- component_data_OS %>%
   filter(Censoring == "Yes")
 
@@ -1637,7 +1644,7 @@ p_cens_OS=ggplot(plot_data,
   scale_color_manual(values = c("1" = "steelblue",
                                 "2" = "firebrick"))
 ```
-```{r Plot only Methods data}
+```{r }
 plot_data <- component_data_OS %>%
   filter(Methods == "Yes")
 
@@ -1652,7 +1659,7 @@ p_meth_OS=ggplot(plot_data,
   scale_color_manual(values = c("1" = "steelblue",
                                 "2" = "firebrick"))
 ```
-```{r Plot only Population data}
+```{r }
 plot_data <- component_data_OS %>%
   filter(Population == "Yes")
 
