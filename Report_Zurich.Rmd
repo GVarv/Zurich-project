@@ -776,22 +776,6 @@ summary(m_os)
 
 The results for OS seem to show an even stronger estimated slope of $-0.18$ in the same direction as for TBE. The $p$-value is larger due to a considerably larger standard error because of a smaller sample size and an increased residual variance.
 
-```{r Plot only Censoring data}
-plot_data <- component_data_TBE %>%
-  filter(Censoring == "Yes")
-
-ggplot(plot_data,
-       aes(x = log_se, y = log_ratio, color = Component)) +
-  geom_point(size = 2.5, alpha = 0.8) +
-  theme_minimal() +
-  labs(title = "Log Ratio vs log of ratio of SE (Censoring = Yes)",
-       x = "Log of ratio of SE",
-       y = "Log ratio",
-       color = "Component") +
-  scale_color_manual(values = c("1" = "steelblue",
-                                "2" = "firebrick"))
-```
-
 #### Finite Mixture Model (FMM)
 
 The scatter plot for both OS and TBE seemed to also suggest the possibility of two different regression lines, so we also examined this possibility using finite mixture models (FMM). Since the scatter plot suggested only two different distribution, we built a model with two components.
@@ -870,6 +854,43 @@ grid.arrange(
 
 ```
 
+```{r Distributions of categories TBE, include=FALSE}
+inc=c("NCT","Censoring", "Methods", "Population")
+#inc=c("NCT","Type.of.sensitivity.analysis")
+red_TBE=dif_TBE_clean[,inc]
+post_TBE=model_f_TBE@posterior$scaled
+colnames(post_TBE)=c("post_C1","post_C2")
+red_clus_TBE=as.data.frame(cbind(red_TBE,post_TBE,Cluster=model_f_TBE@cluster))
+
+
+clust_TBE <- red_clus_TBE %>%
+  group_by(Cluster) %>%
+  group_split()
+
+#table(clust_TBE[[1]]["Type.of.sensitivity.analysis"])/nrow(clust_TBE[[1]])*100
+pcens1=table(clust_TBE[[1]]["Censoring"])["Yes"]#/nrow(clust_TBE[[1]])*100
+pmeth1=table(clust_TBE[[1]]["Methods"])["Yes"]#/nrow(clust_TBE[[1]])*100
+ppop1=table(clust_TBE[[1]]["Population"])["Yes"]#/nrow(clust_TBE[[1]])*100
+
+pcens2=table(clust_TBE[[2]]["Censoring"])["Yes"]#/nrow(clust_TBE[[2]])*100
+pmeth2=table(clust_TBE[[2]]["Methods"])["Yes"]#/nrow(clust_TBE[[2]])*100
+ppop2=table(clust_TBE[[2]]["Population"])["Yes"]#/nrow(clust_TBE[[2]])*100
+#Need to create a dataset that contains the study information and the cluster information and the posterior probabilities(scaled or unscaled?)
+tab=data.frame(Censoring=c(pcens1,pcens2),Methods=c(pmeth1,pmeth2),Population=c(ppop1,ppop2))
+rownames(tab)=c("Component 1", "Component 2")
+tab_TBE=round(tab/nrow(dif_TBE_clean), digits = 3)*100
+#tab_TBE[] <- lapply(tab_TBE, paste0, '%')
+#Table of how many of each sensitivity analyses in each category (make subsets?)
+
+tab_rel_TBE=tab
+tab_rel_TBE[1,]=(tab_rel_TBE[1,]/nrow(clust_TBE[[1]]))*100
+tab_rel_TBE[2,]=(tab_rel_TBE[2,]/nrow(clust_TBE[[2]]))*100
+
+tab_TBE[] <- lapply(tab_TBE, paste0, '%')
+tab_rel_TBE=round(tab_rel_TBE, digits = 3)
+tab_rel_TBE[] <- lapply(tab_rel_TBE, paste0, '%')
+```
+
 ```{r Identify NCTs in components TBE}
 NCT1_TBE=as.character(unique(clust_TBE[[1]]$NCT))
 NCT2_TBE=as.character(unique(clust_TBE[[2]]$NCT))
@@ -917,7 +938,7 @@ ggplot(plot_data,
                                 "2" = "firebrick"))
 ```
 
-```{r Plot only Methods data, include=FALSE}
+```{r Plot only Methods data TBE, include=FALSE}
 plot_data <- component_data_TBE %>%
   filter(Methods == "Yes")
 
@@ -934,7 +955,7 @@ ggplot(plot_data,
 
 ```
 
-```{r Plot only Population data, include=FALSE}
+```{r Plot only Population data TBE, include=FALSE}
 plot_data <- component_data_TBE %>%
   filter(Population == "Yes")
 
@@ -990,43 +1011,6 @@ ggplot(long_data,
 
 ```
 
-```{r Distributions of categories TBE, include=FALSE}
-inc=c("NCT","Censoring", "Methods", "Population")
-#inc=c("NCT","Type.of.sensitivity.analysis")
-red_TBE=dif_TBE_clean[,inc]
-post_TBE=model_f_TBE@posterior$scaled
-colnames(post_TBE)=c("post_C1","post_C2")
-red_clus_TBE=as.data.frame(cbind(red_TBE,post_TBE,Cluster=model_f_TBE@cluster))
-
-
-clust_TBE <- red_clus_TBE %>%
-  group_by(Cluster) %>%
-  group_split()
-
-#table(clust_TBE[[1]]["Type.of.sensitivity.analysis"])/nrow(clust_TBE[[1]])*100
-pcens1=table(clust_TBE[[1]]["Censoring"])["Yes"]#/nrow(clust_TBE[[1]])*100
-pmeth1=table(clust_TBE[[1]]["Methods"])["Yes"]#/nrow(clust_TBE[[1]])*100
-ppop1=table(clust_TBE[[1]]["Population"])["Yes"]#/nrow(clust_TBE[[1]])*100
-
-pcens2=table(clust_TBE[[2]]["Censoring"])["Yes"]#/nrow(clust_TBE[[2]])*100
-pmeth2=table(clust_TBE[[2]]["Methods"])["Yes"]#/nrow(clust_TBE[[2]])*100
-ppop2=table(clust_TBE[[2]]["Population"])["Yes"]#/nrow(clust_TBE[[2]])*100
-#Need to create a dataset that contains the study information and the cluster information and the posterior probabilities(scaled or unscaled?)
-tab=data.frame(Censoring=c(pcens1,pcens2),Methods=c(pmeth1,pmeth2),Population=c(ppop1,ppop2))
-rownames(tab)=c("Component 1", "Component 2")
-tab_TBE=round(tab/nrow(dif_TBE_clean), digits = 3)*100
-#tab_TBE[] <- lapply(tab_TBE, paste0, '%')
-#Table of how many of each sensitivity analyses in each category (make subsets?)
-
-tab_rel_TBE=tab
-tab_rel_TBE[1,]=(tab_rel_TBE[1,]/nrow(clust_TBE[[1]]))*100
-tab_rel_TBE[2,]=(tab_rel_TBE[2,]/nrow(clust_TBE[[2]]))*100
-
-tab_TBE[] <- lapply(tab_TBE, paste0, '%')
-tab_rel_TBE=round(tab_rel_TBE, digits = 3)
-tab_rel_TBE[] <- lapply(tab_rel_TBE, paste0, '%')
-```
-
 For **OS** the FMM distribution between component was:
 
 ```{r Table of results OS M1, echo=FALSE}
@@ -1054,6 +1038,41 @@ kable(s_exp_tab_df_OS, booktabs = TRUE, align = c("l", rep("c", 6))) %>%
   add_header_above(c(" " = 1, "Component 1" = 3, "Component 2" = 3))
 #print(s_exp_tab_df_OS)
 
+```
+
+```{r Distribution of categories OS, include=FALSE}
+red_OS=dif_OS_clean[,inc]
+post_OS=model_f_os@posterior$scaled
+colnames(post_OS)=c("post_C1","post_C2")
+red_clus_OS=as.data.frame(cbind(red_OS,post_OS,Cluster=model_f_os@cluster))
+
+
+clust_OS <- red_clus_OS %>%
+  group_by(Cluster) %>%
+  group_split()
+
+#table(clust_TBE[[1]]["Type.of.sensitivity.analysis"])/nrow(clust_TBE[[1]])*100
+pcens1=table(clust_OS[[1]]["Censoring"])["Yes"]#/nrow(clust_OS[[1]])*100
+pmeth1=table(clust_OS[[1]]["Methods"])["Yes"]#/nrow(clust_OS[[1]])*100
+ppop1=table(clust_OS[[1]]["Population"])["Yes"]#/nrow(clust_OS[[1]])*100
+
+pcens2=table(clust_OS[[2]]["Censoring"])["Yes"]#/nrow(clust_OS[[2]])*100
+pmeth2=table(clust_OS[[2]]["Methods"])["Yes"]#/nrow(clust_OS[[2]])*100
+ppop2=table(clust_OS[[2]]["Population"])["Yes"]#/nrow(clust_OS[[2]])*100
+
+tab=data.frame(Censoring=c(pcens1,pcens2),Methods=c(pmeth1,pmeth2),Population=c(ppop1,ppop2))
+rownames(tab)=c("Component 1", "Component 2")
+tab_OS=round(tab/nrow(dif_OS_clean), digits = 3)*100
+#tab_OS[] <- lapply(tab_OS, paste0, '%')
+#Table of how many of each sensitivity analyses in each category (make subsets?)
+
+tab_rel_OS=tab
+tab_rel_OS[1,]=tab_rel_OS[1,]/nrow(clust_OS[[1]])*100
+tab_rel_OS[2,]=tab_rel_OS[2,]/nrow(clust_OS[[2]])*100
+
+tab_OS[] <- lapply(tab_OS, paste0, '%')
+tab_rel_OS=round(tab_rel_OS, digits = 2)
+tab_rel_OS[] <- lapply(tab_rel_OS, paste0, '%')
 ```
 
 ```{r Identify NCTs in components OS}
@@ -1306,39 +1325,7 @@ ggplot(pip_yes_component1, aes(x = Variable, y = PIP, fill = Component, color = 
 
 ```
 
-```{r Distribution of categories OS, include=FALSE}
-red_OS=dif_OS_clean[,inc]
-post_OS=model_f_os@posterior$scaled
-colnames(post_OS)=c("post_C1","post_C2")
-red_clus_OS=as.data.frame(cbind(red_OS,post_OS,Cluster=model_f_os@cluster))
-
-
-clust_OS <- red_clus_OS %>%
-  group_by(Cluster) %>%
-  group_split()
-
-#table(clust_TBE[[1]]["Type.of.sensitivity.analysis"])/nrow(clust_TBE[[1]])*100
-pcens1=table(clust_OS[[1]]["Censoring"])["Yes"]#/nrow(clust_OS[[1]])*100
-pmeth1=table(clust_OS[[1]]["Methods"])["Yes"]#/nrow(clust_OS[[1]])*100
-ppop1=table(clust_OS[[1]]["Population"])["Yes"]#/nrow(clust_OS[[1]])*100
-
-pcens2=table(clust_OS[[2]]["Censoring"])["Yes"]#/nrow(clust_OS[[2]])*100
-pmeth2=table(clust_OS[[2]]["Methods"])["Yes"]#/nrow(clust_OS[[2]])*100
-ppop2=table(clust_OS[[2]]["Population"])["Yes"]#/nrow(clust_OS[[2]])*100
-
-tab=data.frame(Censoring=c(pcens1,pcens2),Methods=c(pmeth1,pmeth2),Population=c(ppop1,ppop2))
-rownames(tab)=c("Component 1", "Component 2")
-tab_OS=round(tab/nrow(dif_OS_clean), digits = 3)*100
-#tab_OS[] <- lapply(tab_OS, paste0, '%')
-#Table of how many of each sensitivity analyses in each category (make subsets?)
-
-tab_rel_OS=tab
-tab_rel_OS[1,]=tab_rel_OS[1,]/nrow(clust_OS[[1]])*100
-tab_rel_OS[2,]=tab_rel_OS[2,]/nrow(clust_OS[[2]])*100
-
-tab_OS[] <- lapply(tab_OS, paste0, '%')
-tab_rel_OS=round(tab_rel_OS, digits = 2)
-tab_rel_OS[] <- lapply(tab_rel_OS, paste0, '%')
+```{}
 ```
 
 ```{r PIP OS, include=FALSE}
