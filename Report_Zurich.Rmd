@@ -296,7 +296,7 @@ for (y in seq_along(split_df_grouped)) { #For each NCT
 }
 ```
 
-```{r Combine comparisons, warning=FALSE}
+```{r Combine comparisons, warning=FALSE, include=FALSE}
 dif_OS=data.frame()
 dif_TBE=data.frame()
 x=y=0
@@ -370,7 +370,7 @@ tOS=table(dif_OS_clean$Type.of.sensitivity.analysis)
 t_tot=as.data.frame(bind_rows(tTBE, tOS))
 t_tot[is.na(t_tot)]=0
 rownames(t_tot)=c("TBE", "OS")
-t_tot
+kable(t_tot)
 ```
 
 Also, the same study could have multiple sensitivity analyses, and those could belong to different categories. The following figure shows how many studies have sensitivity analysis across how many different categories.
@@ -450,7 +450,7 @@ The following figure illustrates the frequency of the number of sensitivity anal
 
 It includes only the analyses that reported numerical values, but 14 analyses coming from 10 RCTs were described in the public documents, but did not have any results described.
 
-```{r}
+```{r Frequency plot, echo=FALSE}
 library(ggplot2)
 
 # Combine into a data frame with a group label
@@ -475,16 +475,7 @@ ggplot(df, aes(x = value, fill = group)) +
 
 It is worth noticing that the number of studies that do not report any sensitivity analysis at all is quite high for both endpoints. 40 studies did not report any sensitivity analysis for OS and 19 did not report any sensitivity analyses for TBE. The fact that $\frac{2}{3}$ of studies did not have any sensitivity analyses for OS is not surprising, as that is considered a more stable and objective endpoint.\\ We then looked at these sensitivity analyses were distributed among the different categories and the results are shown in the next figure.
 
-```{r}
-table(dif_TBE_clean$Type.of.sensitivity.analysis)
-table(dif_TBE_clean$Censoring)
-table(dif_TBE_clean$Methods)
-table(dif_TBE_clean$Population)
-
-table(dif_OS_clean$Type.of.sensitivity.analysis)
-table(dif_OS_clean$Censoring)
-table(dif_OS_clean$Methods)
-table(dif_OS_clean$Population)
+```{r Frequency percentage, echo=FALSE}
 freq_OS=as.data.frame(table(dif_OS_clean$Type.of.sensitivity.analysis))
 freq_TBE=as.data.frame(table(dif_TBE_clean$Type.of.sensitivity.analysis))
 
@@ -566,7 +557,7 @@ summary(dif_OS_clean$log_ratio)
 
 We did the same for the distribution of the standard errors comparison.
 
-```{r Differences in Se, warning=FALSE}
+```{r Differences in Se, warning=FALSE, echo=FALSE}
 
 df <- data.frame(
   endpoint = rep(c("OS", "TBE"), c(length(dif_OS_clean$log_se), length(dif_TBE_clean$log_se))),
@@ -611,7 +602,7 @@ To examine the possibility of a relationships between the differences in HRs and
 
 This produced the following scatter plots
 
-```{r Scatter plot TBE, fig.width=7, fig.height=5, warning=FALSE}
+```{r Scatter plot TBE, fig.width=7, fig.height=5, warning=FALSE, echo=FALSE}
 
 library(ggplot2)
 library(viridis)
@@ -619,7 +610,7 @@ library(cowplot)
 library(grid)
 library(colorspace)
 library(ggsci)
-# ---- Auto-fix columns ----
+
 fix_column <- function(x) {
   if (is.factor(x) || is.character(x)) {
     suppressWarnings(as.numeric(as.character(x)))
@@ -679,7 +670,7 @@ cowplot::ggdraw(legend_only_TBE)
 
 ```
 
-```{r Scatter plot OS, fig.width=7, fig.height=5, warning=FALSE}
+```{r Scatter plot OS, fig.width=7, fig.height=5, warning=FALSE, echo=FALSE}
 dif_OS_clean$log_ratio <- fix_column(dif_OS_clean$log_ratio)
 dif_OS_clean$log_se <- fix_column(dif_OS_clean$log_se)
 dif_OS_clean$NCT <- as.factor(dif_OS_clean$NCT)
@@ -735,7 +726,7 @@ We proceeded to explore the relationship between HRs and standard error differen
 
 We initially fitted a linear regression model for each endpoint. For **TBE** we obtained the following results:
 
-```{r Linear model TBE}
+```{r Linear model TBE, echo=FALSE}
 m_TBE=lm(log_ratio ~ log_se, data = dif_TBE_clean)
 
 summ(m_TBE,model.info=FALSE)
@@ -758,7 +749,7 @@ This indicates that the ratio in standard errors tends to decrease when the log 
 
 The same model for **OS** gave the following output:
 
-```{r Linear model OS}
+```{r Linear model OS, echo=FALSE}
 m_os=lm(log_ratio ~ log_se, data = dif_OS_clean)
 summ(m_os,model.info=FALSE)
 #tableRegression(m_os, xtable = FALSE)
@@ -782,7 +773,7 @@ The scatter plot for both OS and TBE seemed to also suggest the possibility of t
 
 Among the sensitivity analyses for TBE, we obtained the components with sizes 62, 129. The estimates, standard error and $p$-values for the different component are reported in the following table:
 
-```{r TBE FMM}
+```{r TBE FMM, echo=FALSE}
 library(flexmix)
 set.seed(4) #We had to add a seed because instability of the model
 model_f_TBE=flexmix(log_ratio ~ log_se, data = dif_TBE_clean, k=2,control = list(nrep = 10) )
@@ -804,7 +795,7 @@ colnames(s_exp_tab_TBE) <- c("Variable",
 s_exp_tab_df_TBE <- as.data.frame(s_exp_tab_TBE)
 ```
 
-```{r Components table TBE}
+```{r Components table TBE, echo=FALSE}
 # Create kable with multi-level header
 kable(s_exp_tab_df_TBE, booktabs = TRUE, align = c("l", rep("c", 6))) %>%
   add_header_above(c(" " = 1, "Component 1" = 3, "Component 2" = 3))
@@ -813,7 +804,7 @@ print(s_exp_tab_df_TBE)
 
 These results show a very strong difference in the strength of the estimate for the logarithm of the ratio between the components. To visualize these results, we plotted the regression lines for both components on the scatter plot
 
-```{r Plot both regressions}
+```{r Plot both regressions, echo=FALSE}
 coeff_TBE<-parameters(model_f_TBE)          
 intercept_TBE1<-coeff_TBE[1,1]
 intercept_TBE2<-coeff_TBE[1,2]
@@ -891,7 +882,7 @@ tab_rel_TBE=round(tab_rel_TBE, digits = 3)
 tab_rel_TBE[] <- lapply(tab_rel_TBE, paste0, '%')
 ```
 
-```{r Identify NCTs in components TBE}
+```{r Identify NCTs in components TBE, echo=FALSE}
 NCT1_TBE=as.character(unique(clust_TBE[[1]]$NCT))
 NCT2_TBE=as.character(unique(clust_TBE[[2]]$NCT))
 total_NCT_TBE=as.character(unique(red_clus_TBE$NCT))
@@ -971,7 +962,7 @@ ggplot(plot_data,
                                 "2" = "firebrick"))
 ```
 
-```{r Compbine subplot TBE, fig.width=10}
+```{r Combine subplot TBE, fig.width=10, echo=FALSE}
 library(ggplot2)
 library(dplyr)
 
@@ -1075,7 +1066,7 @@ tab_rel_OS=round(tab_rel_OS, digits = 2)
 tab_rel_OS[] <- lapply(tab_rel_OS, paste0, '%')
 ```
 
-```{r Identify NCTs in components OS}
+```{r Identify NCTs in components OS, echo=FALSE}
 NCT1_OS=as.character(unique(clust_OS[[1]]$NCT))
 NCT2_OS=as.character(unique(clust_OS[[2]]$NCT))
 total_NCT_OS=as.character(unique(red_clus_OS$NCT))
@@ -1189,10 +1180,7 @@ p_pop_OS=ggplot(plot_data,
                                 "2" = "firebrick"))
 ```
 
-```{r Combine subplot OS, fig.width=10}
-library(tidyr)
-library(dplyr)
-
+```{r Combine subplot OS, fig.width=10, echo=FALSE}
 long_data <- component_data_OS %>%
   filter(Censoring == "Yes" |
          Methods == "Yes" |
@@ -1325,8 +1313,6 @@ ggplot(pip_yes_component1, aes(x = Variable, y = PIP, fill = Component, color = 
 
 ```
 
-```{}
-```
 
 ```{r PIP OS, include=FALSE}
 pip_long_OS <- red_clus_OS %>%
@@ -1368,7 +1354,7 @@ ggplot(pip_one_component_OS, aes(x = Variable, y = PIP, fill = Component, color 
 
 ```
 
-```{r PIP Os mean, fig.width=10}
+```{r PIP Os mean, fig.width=10, echo=FALSE}
 ggplot(pip_one_component_OS, aes(x = Variable, y = PIP, fill = Component, color = Component)) +
   geom_boxplot(width = 0.6, outlier.shape = NA, alpha = 0.4, position = position_dodge(0.8)) +
   stat_summary(
@@ -1405,7 +1391,7 @@ To examine the impact that these changes can have on the analysis we used a line
 
 This covariates model for **TBE** gave the following results:
 
-```{r}
+```{r Covariate model TBE, echo=FALSE}
 m_TBE_cov=lm(log_ratio ~ log_se*Censoring+log_se*Methods+log_se*Population, data = dif_TBE_clean)
 
 summ(m_TBE_cov,model.info=FALSE)
@@ -1416,7 +1402,7 @@ summary(m_TBE_cov)
 
 The results for same model for **OS** were the following:
 
-```{r}
+```{r Covariate model OS, echo=FALSE}
 m_os_cov=lm(log_ratio ~ log_se*Censoring+log_se*Methods+log_se*Population, data = dif_OS_clean)
 summ(m_os_cov,model.info=FALSE)
 
@@ -1429,7 +1415,7 @@ summary(m_os_cov)
 
 Since multiple points of the dataset come from the same RCT, we also fitted a random effect model with the RCT ID as random intercept, in order to take into account the effect that this clustering could have on the analysis
 
-```{r, include=FALSE, echo=FALSE}
+```{r, include=FALSE}
 dif_OS_clean$Type.of.sensitivity.analysis=relevel(as.factor(dif_OS_clean$Type.of.sensitivity.analysis),3)
 levels(dif_OS_clean$Type.of.sensitivity.analysis)
 
@@ -1439,7 +1425,7 @@ levels(dif_TBE_clean$Type.of.sensitivity.analysis)
 
 For the different **TBE**, the results are:
 
-```{r Random model TBE, warning=FALSE}
+```{r Random model TBE, warning=FALSE, echo=FALSE}
 
 library(lme4)
 model_TBE=lmer(log_ratio ~ log_se+(1|NCT), data = dif_TBE_clean)
@@ -1464,14 +1450,14 @@ Then we explore the impact that the type of sensitivity analysis has on the resu
 
 This interaction model for **TBE** gave the following results:
 
-```{r Dummy variable interaction model TBE}
+```{r Dummy variable interaction model TBE, echo=FALSE}
 model_TBE_dummycat_inter=lmer(log_ratio ~ log_se*Censoring+log_se*Methods+log_se*Population+(1 | NCT), data = dif_TBE_clean)
 summ(model_TBE_dummycat_inter,model.info=FALSE)
 ```
 
 In the case of **OS**, the model accounting for the interaction gave the following results:
 
-```{r Factor covariates OS, warning=FALSE}
+```{r Factor covariates OS, warning=FALSE, echo=FALSE}
 
 model_OS_inter=lmer(log_ratio ~ log_se*Censoring+log_se*Methods+log_se*Population+(1 | NCT), data = dif_OS_clean)
 su=as.data.frame(summary(model_OS_inter)$varcor)
@@ -1485,7 +1471,7 @@ In this case, the fixed-effect model matrix resulted rank deficient and so the 2
 
 To illustrate the idea behind the choice of type of sensitivity analysis as covariates we could find some studies that show the link between the ratio of sensitivity analyses and the one of HRs.
 
-```{r}
+```{r, echo=FALSE}
 hse_llr_OS=dif_OS_clean[(dif_OS_clean$log_se>0.1 & dif_OS_clean$log_ratio<(-0.1)), ]
 lse_hlr_OS=dif_OS_clean[(dif_OS_clean$log_se<(-0.1) & dif_OS_clean$log_ratio>0.1),]
 lse_trials_OS=unique(lse_hlr_OS$NCT)
@@ -1496,7 +1482,7 @@ table(hse_llr_OS$Type.of.sensitivity.analysis)
 table(lse_hlr_OS$Type.of.sensitivity.analysis)
 ```
 
-```{r}
+```{r, echo=FALSE}
 hse_llr=dif_TBE_clean[dif_TBE_clean$log_se>0.1 & dif_TBE_clean$log_ratio<(-0.1), ]
 lse_hlr=dif_TBE_clean[dif_TBE_clean$se<(-0.1) & dif_TBE_clean$log_ratio>0.1,]
 hse_trials=unique(hse_llr$NCT)
