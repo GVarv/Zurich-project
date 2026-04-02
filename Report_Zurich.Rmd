@@ -287,9 +287,9 @@ for (y in seq_along(split_df_grouped)) { #For each NCT
       print(log_ratio_se)
     }
     if(nrow(sens_type)>0){
-       NCT_comp[[end]]=data.frame(log_ratio=ratio_HR, log_se=log_ratio_se, sens_type)
+       NCT_comp[[end]]=data.frame(log_ratio=ratio_HR, log_se=log_ratio_se, sens_type, ref_HR)
     }else{
-      NCT_comp[[end]]=data.frame(log_ratio=ratio_HR, log_se=log_ratio_se)
+      NCT_comp[[end]]=data.frame(log_ratio=ratio_HR, log_se=log_ratio_se, ref_HR)
       }
   }
   comparisons[[NCT_name]]=NCT_comp
@@ -311,7 +311,7 @@ for (i in 1:length(comparisons)) {
       NCT = rp,
       res
     )
-    if(ncol(res)<4){
+    if(ncol(res)<5){
       res[,"Type.of.sensitivity.analysis"]=rep(0,nrow(comparisons[[i]][[ep[j]]]))
     }
     if(grepl("OS", ep[j])){
@@ -1409,6 +1409,15 @@ summ(m_os_cov,model.info=FALSE)
 round(AIC(m_os_cov),2)
 round(BIC(m_os_cov),2)
 summary(m_os_cov)
+```
+##### Primary HR as regression variable
+```{r Ref HR as covariate TBE}
+mHR_TBE= lm(log_ratio ~ log_se * ref_HR, data = dif_TBE_clean)
+summary(mHR_TBE)
+```
+```{r Ref HR as covariate OS}
+mHR_OS= lm(log_ratio ~ log_se * ref_HR, data = dif_OS_clean)
+summary(mHR_OS)
 ```
 
 #### Random effect models
