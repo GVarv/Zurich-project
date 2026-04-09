@@ -738,16 +738,16 @@ We proceeded to explore the relationship between HRs and standard error differen
 We initially fitted a linear regression model for each endpoint. For **TBE** we obtained the following results:
 
 ```{r Linear model TBE, echo=FALSE}
-m_TBE=lm(log_ratio ~ log_se, data = dif_TBE_clean)
+m_TBE=lm(log_ratio ~ 0+log_se, data = dif_TBE_clean)
 
 summ(m_TBE,model.info=FALSE)
 #tableRegression(m_TBE, xtable = FALSE)
 
 coeff_TBE<-coefficients(m_TBE)            
-intercept_TBE<-coeff_TBE[1]
-slope_TBE<- coeff_TBE[2]
+#intercept_TBE<-coeff_TBE[1]
+#slope_TBE<- coeff_TBE[2]
 
-p_main_TBE+geom_abline(intercept = intercept_TBE, slope = slope_TBE, color="black", linetype="dashed", linewidth=0.9)
+p_main_TBE+geom_abline(slope = coeff_TBE, color="black", linetype="dashed", linewidth=0.9)
 
 round(AIC(m_TBE),2)
 round(BIC(m_TBE),2)
@@ -761,15 +761,15 @@ This indicates that the ratio in standard errors tends to decrease when the log 
 The same model for **OS** gave the following output:
 
 ```{r Linear model OS, echo=FALSE}
-m_os=lm(log_ratio ~ log_se, data = dif_OS_clean)
+m_os=lm(log_ratio ~ 0+log_se, data = dif_OS_clean)
 summ(m_os,model.info=FALSE)
 #tableRegression(m_os, xtable = FALSE)
 
 coeff_OS<-coefficients(m_os)          
-intercept_OS<-coeff_OS[1]
-slope_OS<- coeff_OS[2]
+#intercept_OS<-coeff_OS[1]
+#slope_OS<- coeff_OS[2]
 
-p_main_OS+geom_abline(intercept = intercept_OS, slope = slope_OS, color="black", linetype="dashed", linewidth=0.9)
+p_main_OS+geom_abline(slope = coeff_OS, color="black", linetype="dashed", linewidth=0.9)
 
 round(AIC(m_os),2)
 round(BIC(m_os),2)
@@ -780,14 +780,14 @@ The results for OS seem to show an estimated slope of $-0.18$ in the same direct
 
 #### Finite Mixture Model (FMM)
 
-The scatter plot for both OS and TBE seemed to also suggest the possibility of two different regression lines, so we also examined this possibility using finite mixture models (FMM). Since the scatter plot suggested only two different distribution, we built a model with two components.
+The scatter plots above, especially the one for OS seemed to also suggest the possibility of two different regression lines, so we also examined this possibility using finite mixture models (FMM). Since the scatter plot suggested only two different distribution, we built a model with two components.
 
 Among the sensitivity analyses for TBE, we obtained the components with sizes 62, 129. The estimates, standard error and $p$-values for the different component are reported in the following table:
 
 ```{r TBE FMM, echo=FALSE}
 library(flexmix)
 set.seed(4) #We had to add a seed because instability of the model
-model_f_TBE=flexmix(log_ratio ~ log_se, data = dif_TBE_clean, k=2,control = list(nrep = 10) )
+model_f_TBE=flexmix(log_ratio ~ 0+log_se, data = dif_TBE_clean, k=2,control = list(nrep = 10) )
 summary(model_f_TBE)
 s_exp_TBE=flexmix::refit(model_f_TBE)
 s_c1_TBE=as.data.frame(s_exp_TBE@components[[1]][["Comp.1"]])
@@ -810,17 +810,18 @@ s_exp_tab_df_TBE <- as.data.frame(s_exp_tab_TBE)
 # Create kable with multi-level header
 kable(s_exp_tab_df_TBE, booktabs = TRUE, align = c("l", rep("c", 6))) %>%
   add_header_above(c(" " = 1, "Component 1" = 3, "Component 2" = 3))
-print(s_exp_tab_df_TBE)
+#View(s_exp_tab_df_TBE)
 ```
 
-These results show a very strong difference in the strength of the estimate for the logarithm of the ratio between the components. To visualize these results, we plotted the regression lines for both components on the scatter plot
+These results show a very strong difference in the strength of the estimate for the logarithm of the ratio between the components, but they also show that only one component is significant.
+To visualize these results, we plotted the regression lines for both components on the scatter plot
 
 ```{r Plot both regressions, echo=FALSE}
 coeff_TBE<-parameters(model_f_TBE)          
-intercept_TBE1<-coeff_TBE[1,1]
-intercept_TBE2<-coeff_TBE[1,2]
-slope_TBE1<- coeff_TBE[2,1]
-slope_TBE2<- coeff_TBE[2,2]
+# intercept_TBE1<-coeff_TBE[1,1]
+# intercept_TBE2<-coeff_TBE[1,2]
+#slope_TBE1<- coeff_TBE[2,1]
+#slope_TBE2<- coeff_TBE[2,2]
 
 # p_main_TBE+
 #   geom_abline(intercept = intercept_TBE1, slope = slope_TBE1, color="deepskyblue2", linetype="dashed", linewidth=0.9)+
@@ -845,8 +846,8 @@ line_legend <- legendGrob(
 
 
 p_main_TBE_no_legend <- p_main_TBE + theme(legend.position = "none")+
-  geom_abline(intercept = intercept_TBE1, slope = slope_TBE1, color="deepskyblue2", linetype="dashed", linewidth=0.9)+
-  geom_abline(intercept = intercept_TBE2, slope = slope_TBE2, color="firebrick1", linetype="dashed", linewidth=0.9)
+  geom_abline(slope = coeff_TBE[1,1], color="deepskyblue2", linetype="dashed", linewidth=0.9)+
+  geom_abline(slope = coeff_TBE[1,2], color="firebrick1", linetype="dashed", linewidth=0.9)
 grid.arrange(
   p_main_TBE_no_legend,
   line_legend,
@@ -898,9 +899,9 @@ NCT1_TBE=as.character(unique(clust_TBE[[1]]$NCT))
 NCT2_TBE=as.character(unique(clust_TBE[[2]]$NCT))
 total_NCT_TBE=as.character(unique(red_clus_TBE$NCT))
 same_TBE=intersect(NCT1_TBE, NCT2_TBE)
-length(same_TBE)
+#length(same_TBE)
 diff_TBE=total_NCT_TBE[!total_NCT_TBE %in% same_TBE]
-length(diff_TBE)
+#length(diff_TBE)
 ```
 
 We first looked at the study IDs of the sensitivity analyses in each component and it was possible to see that, out of the `{r} length(unique(total_NCT_TBE))` studies that had sensitivity analyses for TBE, `{r} length(same_TBE)` had some of their sensitivity analyses present in both component and `{r} length(diff_TBE)` had analyses in only one component. This seem to suggest that the component assignation is not related to the study ID.
@@ -1016,8 +1017,8 @@ ggplot(long_data,
 For **OS** the FMM distribution between component was:
 
 ```{r Table of results OS M1, echo=FALSE}
-set.seed(5)
-model_f_os=flexmix(log_ratio ~ log_se, data = dif_OS_clean, k=2)
+#set.seed(5) #Results are way less unstable for OS as we get the same results, just with flipped components
+model_f_os=flexmix(log_ratio ~ 0+log_se, data = dif_OS_clean, k=2)
 summary(model_f_os)
 s_exp=flexmix::refit(model_f_os)
 s_c1=as.data.frame(s_exp@components[[1]][["Comp.1"]])
@@ -1038,7 +1039,7 @@ s_exp_tab_df_OS <- as.data.frame(s_exp_tab_OS)
 # Create kable with multi-level header
 kable(s_exp_tab_df_OS, booktabs = TRUE, align = c("l", rep("c", 6))) %>%
   add_header_above(c(" " = 1, "Component 1" = 3, "Component 2" = 3))
-#print(s_exp_tab_df_OS)
+#View(s_exp_tab_df_OS)
 
 ```
 
@@ -1106,10 +1107,10 @@ component_data_OS <- bind_cols(
 
 ```{r Plot FMM OS, echo=FALSE}
 coeff_OS<-parameters(model_f_os)          
-intercept_OS1<-coeff_OS[1,1]
-intercept_OS2<-coeff_OS[1,2]
-slope_OS1<- coeff_OS[2,1]
-slope_OS2<- coeff_OS[2,2]
+# intercept_OS1<-coeff_OS[1,1]
+# intercept_OS2<-coeff_OS[1,2]
+# slope_OS1<- coeff_OS[2,1]
+# slope_OS2<- coeff_OS[2,2]
 
 components <- c("Component 1", "Component 2")
 colors <- c("deepskyblue2", "firebrick1")
@@ -1128,8 +1129,8 @@ line_legend <- legendGrob(
 
 
 p_main_OS_no_legend <- p_main_OS + theme(legend.position = "none")+
-  geom_abline(intercept = intercept_OS1, slope = slope_OS1, color="deepskyblue2", linetype="dashed", linewidth=0.9)+
-  geom_abline(intercept = intercept_OS2, slope = slope_OS2, color="firebrick1", linetype="dashed", linewidth=0.9)
+  geom_abline(slope = coeff_OS[1,1], color="deepskyblue2", linetype="dashed", linewidth=0.9)+
+  geom_abline(slope = coeff_OS[1,2], color="firebrick1", linetype="dashed", linewidth=0.9)
 grid.arrange(
   p_main_OS_no_legend,
   line_legend,
@@ -1403,32 +1404,32 @@ To examine the impact that these changes can have on the analysis we used a line
 This covariates model for **TBE** gave the following results:
 
 ```{r Covariate model TBE, echo=FALSE}
-m_TBE_cov=lm(log_ratio ~ log_se*Censoring+log_se*Methods+log_se*Population, data = dif_TBE_clean)
+m_TBE_cov=lm(log_ratio ~0+ log_se*Censoring+log_se*Methods+log_se*Population, data = dif_TBE_clean)
 
 summ(m_TBE_cov,model.info=FALSE)
 round(AIC(m_TBE_cov),2)
 round(BIC(m_TBE_cov),2)
-summary(m_TBE_cov)
+#summary(m_TBE_cov)
 ```
 
 The results for same model for **OS** were the following:
 
 ```{r Covariate model OS, echo=FALSE}
-m_os_cov=lm(log_ratio ~ log_se*Censoring+log_se*Methods+log_se*Population, data = dif_OS_clean)
+m_os_cov=lm(log_ratio ~0+ log_se*Censoring+log_se*Methods+log_se*Population, data = dif_OS_clean)
 summ(m_os_cov,model.info=FALSE)
 
 round(AIC(m_os_cov),2)
 round(BIC(m_os_cov),2)
-summary(m_os_cov)
+#summary(m_os_cov)
 ```
 ##### Primary HR as regression variable
 ```{r Ref HR as covariate TBE}
-mHR_TBE= lm(log_ratio ~ log_se * log(ref_HR), data = dif_TBE_clean)
-summary(mHR_TBE)
+mHR_TBE= lm(log_ratio ~ 0+log_se * log(ref_HR), data = dif_TBE_clean)
+summ(mHR_TBE)
 ```
 ```{r Ref HR as covariate OS}
-mHR_OS= lm(log_ratio ~ log_se * log(ref_HR), data = dif_OS_clean) #Remove methods
-summary(mHR_OS)
+mHR_OS= lm(log_ratio ~ 0+log_se * log(ref_HR), data = dif_OS_clean) #Remove methods
+summ(mHR_OS)
 ```
 
 #### Random effect models
@@ -1448,7 +1449,7 @@ For the different **TBE**, the results are:
 ```{r Random model TBE, warning=FALSE, echo=FALSE}
 
 library(lme4)
-model_TBE=lmer(log_ratio ~ log_se+(1|NCT), data = dif_TBE_clean)
+model_TBE=lmer(log_ratio ~ 0+log_se+(1|NCT), data = dif_TBE_clean)
 
 su=as.data.frame(summary(model_TBE)$varcor)
 ICC_TBE=(su[su$grp=="NCT", "sdcor"])**2/((su[su$grp=="NCT", "sdcor"])**2+(su[su$grp=="Residual", "sdcor"])**2)
@@ -1460,7 +1461,7 @@ For **OS** the random effect model shows the following results:
 
 ```{r Random model OS,warning=FALSE, echo=FALSE}
 
-model_OS=lmer(log_ratio ~ log_se+ (1 | NCT), data = dif_OS_clean)
+model_OS=lmer(log_ratio ~ 0+log_se+ (1 | NCT), data = dif_OS_clean)
 su=as.data.frame(summary(model_OS)$varcor)
 ICC_OS=(su[su$grp=="NCT", "sdcor"])**2/((su[su$grp=="NCT", "sdcor"])**2+(su[su$grp=="Residual", "sdcor"])**2)
 summ(model_OS,model.info=FALSE)
@@ -1471,7 +1472,7 @@ Then we explore the impact that the type of sensitivity analysis has on the resu
 This interaction model for **TBE** gave the following results:
 
 ```{r Dummy variable interaction model TBE, echo=FALSE}
-model_TBE_dummycat_inter=lmer(log_ratio ~ log_se*Censoring+log_se*Methods+log_se*Population+(1 | NCT), data = dif_TBE_clean)
+model_TBE_dummycat_inter=lmer(log_ratio ~0+ log_se*Censoring+log_se*Methods+log_se*Population+(1 | NCT), data = dif_TBE_clean)
 summ(model_TBE_dummycat_inter,model.info=FALSE)
 ```
 
@@ -1479,7 +1480,7 @@ In the case of **OS**, the model accounting for the interaction gave the followi
 
 ```{r Factor covariates OS, warning=FALSE, echo=FALSE}
 
-model_OS_inter=lmer(log_ratio ~ log_se*Censoring+log_se*Methods+log_se*Population+(1 | NCT), data = dif_OS_clean)
+model_OS_inter=lmer(log_ratio ~0+ log_se*Censoring+log_se*Methods+log_se*Population+(1 | NCT), data = dif_OS_clean)
 su=as.data.frame(summary(model_OS_inter)$varcor)
 ICC_OS_cat=(su[su$grp=="NCT", "sdcor"])**2/((su[su$grp=="NCT", "sdcor"])**2+(su[su$grp=="Residual", "sdcor"])**2)
 summ(model_OS_inter,model.info=FALSE)
