@@ -1,10 +1,19 @@
 ---
 title: "Zurich Report"
-output: html_document
+output:
+  pdf_document:
+    keep_tex: true
+header-includes:
+  - \usepackage{booktabs}
+  - \usepackage{lmodern}
 date: "2026-03-20"
 ---
 
 ```{r setup, include=FALSE}
+knitr::opts_chunk$set(dev = "cairo_pdf")
+#install.packages("tinytex")
+#tinytex::install_tinytex()
+
 library(kableExtra)
 library(jtools)
 # Use Bootstrap styling automatically
@@ -432,7 +441,7 @@ All the files and code used for this project are available on [GitHub](https://g
 
 ### Analysis comparison per trial
 
-To identify whether there was any pattern in the choice of primary or sensitivity analysis, we compared the results from each of the reported analyzes retrieving the standard errors of the log of each HR using the \texttt{ci2se} function from the \texttt{biostatUZH} R package and then computed the ratio between the standard errors of the sensitivity analyzes and the one of the primary analyzes. Similarly, we computed the logarithm of the ratio of the HR of the sensitivity analysis over the HR of the primary analysis.
+To identify whether there was any pattern in the choice of primary or sensitivity analysis, we compared the results from each of the reported analyzes retrieving the standard errors of each HR using the \texttt{ci2se} function from the \texttt{biostatUZH} R package and then computed the ratio between the standard errors of the sensitivity analyzes and the one of the primary analyzes. Similarly, we computed the logarithm of the ratio of the HR of the sensitivity analysis over the HR of the primary analysis.
 
 We then examined the distribution of these quantities for each endpoint and, to examine the possibility of a relation between the comparison of HRs and standard error between sensitivity and primary analyzes, we plotted the ratio of the standard errors computed before against the logarithm of the ratio of HRs.
 
@@ -448,7 +457,7 @@ Finally, we expanded the previous models to account for the presence of clusteri
 
 The following figure illustrates the frequency of the number of sensitivity analyses per endpoint.
 
-It includes only the analyses that reported numerical values, but 14 analyses coming from 10 RCTs were described in the public documents, but did not have any results described.
+It includes only the analyses that reported numerical values , but, among the analyses described in the public documents we examined, 14 analyses coming from 10 RCTs were described but did not have any results described.
 
 ```{r Frequency plot, echo=FALSE}
 library(ggplot2)
@@ -473,7 +482,8 @@ ggplot(df, aes(x = value, fill = group)) +
   theme_minimal()
 ```
 
-It is worth noticing that the number of studies that do not report any sensitivity analysis at all is quite high for both endpoints. 40 studies did not report any sensitivity analysis for OS and 19 did not report any sensitivity analyses for TBE. The fact that $\frac{2}{3}$ of studies did not have any sensitivity analyses for OS is not surprising, as that is considered a more stable and objective endpoint.\\ We then looked at these sensitivity analyses were distributed among the different categories and the results are shown in the next figure.
+It is worth noticing that the number of studies that do not report any sensitivity analysis at all is quite high for both endpoints. 40 studies did not report any sensitivity analysis for OS and 19 did not report any sensitivity analyses for TBE. The fact that $\frac{2}{3}$ of studies did not have any sensitivity analyses for OS is not surprising, as that is considered a more stable and objective endpoint.
+We then looked at these sensitivity analyses were distributed among the different categories and the results are shown in the next figure.
 
 ```{r Frequency percentage, echo=FALSE}
 freq_OS=as.data.frame(table(dif_OS_clean$Type.of.sensitivity.analysis))
@@ -582,7 +592,8 @@ ggplot(df, aes(x = endpoint, y = SE, fill = endpoint)) +
   )
 ```
 
-The ratio of standard errors now shows more variability for OS compared to TBE. The ratios vary around 0 for TBE, but tend to be larger 0 for OS. This suggests that the standard errors of sensitivity analyses for OS tend to be larger than the standard errors for the primary analysis. This is not the case for TBE.
+The logarithm of the ratio of standard errors now shows more variability for OS compared to TBE. 
+The ratios vary around 0 for TBE, but tend to be larger than 0 for OS. This suggests that the standard errors of sensitivity analyses for OS tend to be larger than the standard errors for the primary analysis. This is not the case for TBE.
 
 To summarise, the distribution of $\log(\frac{SE_{Sensitivity}}{SE_{Primary}})$ is:
 
@@ -765,7 +776,7 @@ round(BIC(m_os),2)
 summary(m_os)
 ```
 
-The results for OS seem to show an even stronger estimated slope of $-0.18$ in the same direction as for TBE. The $p$-value is larger due to a considerably larger standard error because of a smaller sample size and an increased residual variance.
+The results for OS seem to show an estimated slope of $-0.18$ in the same direction as for TBE. The $p$-value is larger due to a considerably larger standard error because of a smaller sample size and an increased residual variance.
 
 #### Finite Mixture Model (FMM)
 
@@ -1412,11 +1423,11 @@ summary(m_os_cov)
 ```
 ##### Primary HR as regression variable
 ```{r Ref HR as covariate TBE}
-mHR_TBE= lm(log_ratio ~ log_se * ref_HR, data = dif_TBE_clean)
+mHR_TBE= lm(log_ratio ~ log_se * log(ref_HR), data = dif_TBE_clean)
 summary(mHR_TBE)
 ```
 ```{r Ref HR as covariate OS}
-mHR_OS= lm(log_ratio ~ log_se * ref_HR, data = dif_OS_clean)
+mHR_OS= lm(log_ratio ~ log_se * log(ref_HR), data = dif_OS_clean) #Remove methods
 summary(mHR_OS)
 ```
 
@@ -1504,3 +1515,7 @@ lse_trials=unique(lse_hlr$NCT)
 ## Conclusions
 
 The 60 randomly selected studies that we analysed in this project gave us an idea on the use of sensitivity analyses in oncological RCTs. Even if sensitivity analyses are a very useful practice, especially when dealing with tumour-based endpoints, which are more prone to subjectivity and bias, they are still not planned, nor reported for many studies. The analyses that were reported employed mostly different censoring rules than those used in the primary analysis, and a lower number of them also focused on the different methods and assessment strategies. When comparing these sensitivity analyses with the primary, it was possible to see some effect of Hazard Ratios on the Standard errors, but while the models we ran seemed to indicate a relationship between these two values, analyzing different covariates and accounting for clustering in the different studies has not led to an explanation of this relationship. Using Finite Mixture Models indicates very different trends for both tumour-based endpoints and Overall Survival sensitivity analyses which could be infleunced by the category of sensitivity analyses. Further assessment on new samples of studies would be needed to confirm this hypothesis.
+
+
+
+
