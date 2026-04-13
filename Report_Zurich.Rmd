@@ -227,14 +227,15 @@ for (y in seq_along(split_df_grouped)) { #For each NCT
     gg=groups[[i]]
     end=unique(gg$Endpoint)
     kk=which(grepl("Primary", gg[["Analysis"]])) #Identify the primary analysis
-    ref_HR=as.numeric(gg[kk,"HR"]) #Transform it in numeric value
+    ref_HR=as.numeric(gg[kk,"HR"])
+    Analysis= gg[-kk,"Analysis"]#Transform it in numeric value
     if(is.na(ref_HR)){
-      #print(paste(NCT_name, end,gg$Analysis[kk], " reported as:", gg[kk,"HR"])) #If the HR is not a numeric value, print what is reported
+      print(paste(NCT_name, end,gg$Analysis[kk], " reported as:", gg[kk,"HR"])) #If the HR is not a numeric value, print what is reported
     }
     ref_LB=as.numeric(gg[kk,"CI Lower bound"])
     ref_UB=as.numeric(gg[kk,"CI upper bound"])
     if(is.na(ref_LB)| is.na(ref_UB)){ #If there are not enough numerical information for the CI, report it
-      #print(paste(NCT_name, end,gg$Analysis[kk], " no CI information"))
+      print(paste(NCT_name, end,gg$Analysis[kk], " no CI information"))
     }
     #Save the sensitivity analysis results in different vectors
     sens_HR=as.numeric(unlist(gg[-kk,"HR"]))
@@ -248,47 +249,80 @@ for (y in seq_along(split_df_grouped)) { #For each NCT
     ub_na=which(is.na(sens_UB))
     if(length(h_na)!=0 | length(sens_HR)==0){ #If the HR are reported but not numerically, print the reported statement
       cc=which(is.na(as.numeric(gg$HR)))
-      #print(paste(NCT_name, end,gg$Analysis[cc], "HR reported as:", gg$HR[cc]))
-      sens_HR=sens_HR[-h_na] #Remove non numerical values from the vector of values
+      print(paste(NCT_name, end,gg$Analysis[cc], "HR reported as:", gg$HR[cc]))
+      #sens_HR=sens_HR[-h_na] #Remove non numerical values from the vector of values
     }
     if(length(lb_na)!=0 | length(ub_na)!=0 |length(sens_LB)==0| length(sens_UB)==0){ #Repeat for the CIs
       ww=unique(c(which(is.na(gg$`CI Lower bound`)),which(is.na(gg$`CI upper bound`))))
-      #print(paste(NCT_name, end,gg$Analysis[ww], " no CI information"))
-      sens_LB=sens_LB[-c(lb_na,ub_na)]
-      sens_UB=sens_UB[-c(lb_na,ub_na)]
+      print(paste(NCT_name, end,gg$Analysis[ww], " no CI information"))
+      #sens_LB=sens_LB[-c(lb_na,ub_na)]
+      #sens_UB=sens_UB[-c(lb_na,ub_na)]
       
     }
-    if(!is_empty(unique(c(h_na, ub_na, lb_na)))){
-      sens_type=sens_type[-unique(c(h_na, ub_na, lb_na)),]
-    }
+    # if(!is_empty(unique(c(h_na, ub_na, lb_na)))){
+    #   sens_type=sens_type[-unique(c(h_na, ub_na, lb_na)),]
+    # }
 
   
 #Once all the non usable instances have been removed, compare log(HR)s of the sensitivity analyses to the one of the primary one.
- if(!is.na(ref_HR) & length(sens_HR)!=0){ #Check that there are sensitivity analyses to compare
-      ratio_HR=log(sens_HR/ref_HR)
-      if(grepl("OS", end)){
-        med_sens_OS=c(med_sens_OS,length(sens_HR)) #Count how many sensitivity analyses for OS for RCT
-      }
-      if(grepl("FS", end)){ #Count how many sensitivity analyses for TBE for RCT
-        med_sens_TBE=c(med_sens_TBE, length(sens_HR))
-      }
-    }else{ #If no possible comparison to make record it
-      if(grepl("OS", end)){
-        med_sens_OS=c(med_sens_OS,0)
-      }
-      if(grepl("FS", end)){
-        med_sens_TBE=c(med_sens_TBE, 0)
-      }
-       ratio_HR=paste(NCT_name, "No possible HR comparison for ",end)
-       #print(ratio_HR)
+# Safe subset: only remove NA indices if h_na is valid (not 0 and not empty)
+  valid_HR <- sens_HR
+  if (length(h_na) > 0 && all(h_na != 0)) valid_HR[h_na] <- NA
+
+  if (!is.na(ref_HR) & sum(!is.na(valid_HR)) != 0)  { #Check that there are sensitivity analyses to compare
+    ratio_HR <- log(valid_HR / ref_HR)
+  
+    if (grepl("OS", end)) {
+      med_sens_OS <- c(med_sens_OS, length(valid_HR)) #Count how many sensitivity analyses for OS for RCT
     }
-    CI_se_ref=CI_se_sens=c()
-    if(!is.na(ref_LB) & !is.na(ref_UB)){
-      CI_se_ref=ci2se(ref_LB, ref_UB, conf.level = 0.95, ratio = TRUE) #Calculate Standard error from CI for primary analysis
-      if(length(sens_LB)!=0 & length(sens_UB)!=0){
-        CI_se_sens=ci2se(sens_LB, sens_UB, conf.level = 0.95, ratio = TRUE) #Calculate Standard error from CI for Sensitivity analysis 
-        }
+    if (grepl("FS", end)) { #Count how many sensitivity analyses for TBE for RCT
+      med_sens_TBE <- c(med_sens_TBE, length(valid_HR))
     }
+  
+  } else { #If no possible comparison to make record it
+  
+    if (grepl("OS", end)) {
+      if (length(sens_HR) != 0 & length(valid_HR) == 0) {  # HRs exist but all are NA
+        med_sens_OS <- c(med_sens_OS, NA)
+      }
+      if (length(sens_HR) == 0) {                           # No HRs at all
+        med_sens_OS <- c(med_sens_OS, 0)
+      }
+    }
+  
+    if (grepl("FS", end)) {
+      if (length(sens_HR) != 0 & length(valid_HR) == 0) {  # HRs exist but all are NA
+        med_sens_TBE <- c(med_sens_TBE, NA)
+      }
+      if (length(sens_HR) == 0) {                           # No HRs at all
+        med_sens_TBE <- c(med_sens_TBE, 0)
+      }
+    }
+  
+  ratio_HR <- paste(NCT_name, "No possible HR comparison for ", end)
+}
+    CI_se_ref <- CI_se_sens <- c()
+
+# Replace NAs in place to keep alignment
+  valid_LB <- sens_LB
+  valid_UB <- sens_UB
+  if (length(lb_na) > 0 && all(lb_na != 0)) valid_LB[lb_na] <- NA
+  if (length(ub_na) > 0 && all(ub_na != 0)) valid_UB[ub_na] <- NA
+
+  if (!is.na(ref_LB) & !is.na(ref_UB)) {
+    CI_se_ref <- ci2se(ref_LB, ref_UB, conf.level = 0.95, ratio = TRUE)
+  
+    if (sum(!is.na(valid_LB)) != 0 & sum(!is.na(valid_UB)) != 0) {
+    
+      # Compute ci2se only on non-NA positions
+      CI_se_sens <- rep(NA, length(valid_LB))  # pre-fill with NAs to keep alignment
+      non_na_idx <- which(!is.na(valid_LB) & !is.na(valid_UB))  # valid positions
+    
+      CI_se_sens[non_na_idx] <- ci2se(valid_LB[non_na_idx], valid_UB[non_na_idx],
+                                     conf.level = 0.95, ratio = TRUE)
+      # NA positions are already NA from pre-fill
+    }
+  }
     if(length(CI_se_ref)!=0 & length(CI_se_sens)!=0){ #Calculate ratio of Se if possible
       log_ratio_se=log(CI_se_sens/CI_se_ref)
     }else{
@@ -296,7 +330,7 @@ for (y in seq_along(split_df_grouped)) { #For each NCT
       print(log_ratio_se)
     }
     if(nrow(sens_type)>0){
-       NCT_comp[[end]]=data.frame(log_ratio=ratio_HR, log_se=log_ratio_se, sens_type, ref_HR)
+       NCT_comp[[end]]=data.frame(Analysis,log_ratio=ratio_HR, log_se=log_ratio_se, sens_type, ref_HR)
     }else{
       NCT_comp[[end]]=data.frame(log_ratio=ratio_HR, log_se=log_ratio_se, ref_HR)
       }
@@ -322,6 +356,7 @@ for (i in 1:length(comparisons)) {
     )
     if(ncol(res)<5){
       res[,"Type.of.sensitivity.analysis"]=rep(0,nrow(comparisons[[i]][[ep[j]]]))
+       res[,"Analysis"]=rep(0,nrow(comparisons[[i]][[ep[j]]]))
     }
     if(grepl("OS", ep[j])){
       dif_OS=rbind(dif_OS,res)
@@ -650,11 +685,11 @@ names(my_colors) <- levels_nct
 # then same ggplot + scale_color_manual(values = my_colors) as above
 
 
-p_main_TBE <- ggplot(dif_TBE_clean, aes(x = log_ratio, y = log_se, color = NCT)) +
+p_main_TBE <- ggplot(dif_TBE_clean, aes(y = log_ratio, x = log_se, color = NCT)) +
   geom_point(size = 1.8, alpha = 0.7) +
   scale_color_manual(values = my_colors)+  # or scale_color_nejm(), scale_color_jama(), etc.
-  scale_x_continuous(name = "Logarithm of ratio of Standard Errors", breaks = pretty(dif_TBE_clean$log_ratio, n = 6)) +
-  scale_y_continuous(name = "Logarithm of the ratio of HR", breaks = pretty(dif_TBE_clean$log_se, n = 6)) +
+  scale_x_continuous(name = "Logarithm of ratio of Standard Errors", breaks = pretty(dif_TBE_clean$log_se, n = 6)) +
+  scale_y_continuous(name = "Logarithm of the ratio of HR", breaks = pretty(dif_TBE_clean$log_ratio, n = 6)) +
   theme_minimal(base_size = 13) +
   theme(
     legend.position = "none",
@@ -664,7 +699,7 @@ p_main_TBE <- ggplot(dif_TBE_clean, aes(x = log_ratio, y = log_se, color = NCT))
   labs(title = "TBE")
 
 # ---- Legend-only plot ----
-p_legend_TBE <- ggplot(dif_TBE_clean, aes(x = log_ratio, y = log_se, color = NCT)) +
+p_legend_TBE <- ggplot(dif_TBE_clean, aes(y = log_ratio, x = log_se, color = NCT)) +
   geom_point(size = 1.8, alpha = 0.7) +
   scale_color_manual(values = my_colors) + 
   theme_void() +
@@ -697,11 +732,11 @@ n <- length(levels_nct)
 my_colors <- distinctColorPalette(n)   # returns n distinct colors
 names(my_colors) <- levels_nct
 
-p_main_OS <- ggplot(dif_OS_clean, aes(x = log_ratio, y = log_se, color = NCT)) +
+p_main_OS <- ggplot(dif_OS_clean, aes(y = log_ratio, x = log_se, color = NCT)) +
   geom_point(size = 1.8, alpha = 0.7) +
   scale_color_manual(values = my_colors)+
-  scale_x_continuous(name = "Logarithm of ratio of Standard Errors", breaks = pretty(dif_OS_clean$log_ratio, n = 6)) +
-  scale_y_continuous(name = "Logarithm of the ratio of HR", breaks = pretty(dif_OS_clean$log_se, n = 6)) +
+  scale_x_continuous(name = "Logarithm of ratio of Standard Errors", breaks = pretty(dif_OS_clean$log_se, n = 6)) +
+  scale_y_continuous(name = "Logarithm of the ratio of HR", breaks = pretty(dif_OS_clean$log_ratio, n = 6)) +
   theme_minimal(base_size = 13) +
   theme(
     legend.position = "none",
@@ -711,7 +746,7 @@ p_main_OS <- ggplot(dif_OS_clean, aes(x = log_ratio, y = log_se, color = NCT)) +
   labs(title = "OS")
 
 # ---- Legend-only plot ----
-p_legend_OS<- ggplot(dif_OS_clean, aes(x = log_ratio, y = log_se, color = NCT)) +
+p_legend_OS<- ggplot(dif_OS_clean, aes(y = log_ratio, x = log_se, color = NCT)) +
   geom_point(size = 1.8, alpha = 0.7) +
   scale_color_manual(values = my_colors) +
   theme_void() +
@@ -745,7 +780,7 @@ summ(m_TBE,model.info=FALSE)
 
 coeff_TBE<-coefficients(m_TBE)            
 #intercept_TBE<-coeff_TBE[1]
-#slope_TBE<- coeff_TBE[2]
+slope_TBE<- coeff_TBE[2]
 
 p_main_TBE+geom_abline(slope = coeff_TBE, color="black", linetype="dashed", linewidth=0.9)
 
@@ -1454,7 +1489,7 @@ model_TBE=lmer(log_ratio ~ 0+log_se+(1|NCT), data = dif_TBE_clean)
 su=as.data.frame(summary(model_TBE)$varcor)
 ICC_TBE=(su[su$grp=="NCT", "sdcor"])**2/((su[su$grp=="NCT", "sdcor"])**2+(su[su$grp=="Residual", "sdcor"])**2)
 
-summ(model_TBE, model.info=FALSE)
+summary(model_TBE, model.info=FALSE)
 ```
 
 For **OS** the random effect model shows the following results:
@@ -1464,7 +1499,7 @@ For **OS** the random effect model shows the following results:
 model_OS=lmer(log_ratio ~ 0+log_se+ (1 | NCT), data = dif_OS_clean)
 su=as.data.frame(summary(model_OS)$varcor)
 ICC_OS=(su[su$grp=="NCT", "sdcor"])**2/((su[su$grp=="NCT", "sdcor"])**2+(su[su$grp=="Residual", "sdcor"])**2)
-summ(model_OS,model.info=FALSE)
+summary(model_OS,model.info=FALSE)
 ```
 
 Then we explore the impact that the type of sensitivity analysis has on the results, adding it as a covariate in the random model.
@@ -1473,7 +1508,7 @@ This interaction model for **TBE** gave the following results:
 
 ```{r Dummy variable interaction model TBE, echo=FALSE}
 model_TBE_dummycat_inter=lmer(log_ratio ~0+ log_se*Censoring+log_se*Methods+log_se*Population+(1 | NCT), data = dif_TBE_clean)
-summ(model_TBE_dummycat_inter,model.info=FALSE)
+summary(model_TBE_dummycat_inter,model.info=FALSE)
 ```
 
 In the case of **OS**, the model accounting for the interaction gave the following results:
@@ -1483,7 +1518,7 @@ In the case of **OS**, the model accounting for the interaction gave the followi
 model_OS_inter=lmer(log_ratio ~0+ log_se*Censoring+log_se*Methods+log_se*Population+(1 | NCT), data = dif_OS_clean)
 su=as.data.frame(summary(model_OS_inter)$varcor)
 ICC_OS_cat=(su[su$grp=="NCT", "sdcor"])**2/((su[su$grp=="NCT", "sdcor"])**2+(su[su$grp=="Residual", "sdcor"])**2)
-summ(model_OS_inter,model.info=FALSE)
+summary(model_OS_inter,model.info=FALSE)
 ```
 
 In this case, the fixed-effect model matrix resulted rank deficient and so the 2 coefficients for the "Population" category were dropped.
@@ -1493,14 +1528,16 @@ In this case, the fixed-effect model matrix resulted rank deficient and so the 2
 To illustrate the idea behind the choice of type of sensitivity analysis as covariates we could find some studies that show the link between the ratio of sensitivity analyses and the one of HRs.
 
 ```{r, echo=FALSE}
-hse_llr_OS=dif_OS_clean[(dif_OS_clean$log_se>0.1 & dif_OS_clean$log_ratio<(-0.1)), ]
-lse_hlr_OS=dif_OS_clean[(dif_OS_clean$log_se<(-0.1) & dif_OS_clean$log_ratio>0.1),]
-lse_trials_OS=unique(lse_hlr_OS$NCT)
-hse_trials_OS=unique(hse_llr_OS$NCT)
+case_studies_OS=dif_OS_clean[(dif_OS_clean$log_se>0 & dif_OS_clean$log_se<0.3 & dif_OS_clean$log_ratio<(-0.1)), ]
+#hse_llr_OS=dif_OS_clean[(dif_OS_clean$log_se>0.1 & dif_OS_clean$log_ratio<(-0.1)), ]
+#lse_hlr_OS=dif_OS_clean[(dif_OS_clean$log_se<(-0.1) & dif_OS_clean$log_ratio>0.1),]
+CS_OS=unique(case_studies_OS$NCT)
+
 #View(data[data$NCT %in% hse_trials_OS & grepl("OS",data$Analysis),])
 #View(data[data$NCT %in% lse_trials_OS & grepl("OS",data$Analysis),])
-table(hse_llr_OS$Type.of.sensitivity.analysis)
-table(lse_hlr_OS$Type.of.sensitivity.analysis)
+table(case_studies_OS$Type.of.sensitivity.analysis)
+View(dif_OS_clean[dif_OS_clean$NCT %in% CS_OS & (dif_OS_clean$log_se>0 & dif_OS_clean$log_se<0.3 & dif_OS_clean$log_ratio<(-0.1)),])
+
 ```
 
 ```{r, echo=FALSE}
