@@ -1532,24 +1532,40 @@ case_studies_OS=dif_OS_clean[(dif_OS_clean$log_se>0 & dif_OS_clean$log_se<0.3 & 
 #hse_llr_OS=dif_OS_clean[(dif_OS_clean$log_se>0.1 & dif_OS_clean$log_ratio<(-0.1)), ]
 #lse_hlr_OS=dif_OS_clean[(dif_OS_clean$log_se<(-0.1) & dif_OS_clean$log_ratio>0.1),]
 CS_OS=unique(case_studies_OS$NCT)
+View(data[data$NCT %in% CS_OS & grepl("OS", data$Analysis),])
+print(data[data$NCT %in% CS_OS & grepl("OS", data$Analysis),4])
 
 #View(data[data$NCT %in% hse_trials_OS & grepl("OS",data$Analysis),])
 #View(data[data$NCT %in% lse_trials_OS & grepl("OS",data$Analysis),])
 table(case_studies_OS$Type.of.sensitivity.analysis)
-View(dif_OS_clean[dif_OS_clean$NCT %in% CS_OS & (dif_OS_clean$log_se>0 & dif_OS_clean$log_se<0.3 & dif_OS_clean$log_ratio<(-0.1)),])
+
 
 ```
+
+- NCT02409342 (3): The sensitivity analyses that stand out are the ones where, Sensitivity analysis of OS for NPT was based on the time interval during, which patients received NPT until the event or censoring time was discounted at 10%, 20%, and 30% for both arms to investigate how the OS results would have looked if the NPT was not available. 
+-NCT03110562: The sensitivity analysis to stand out was using a switch-adjusted HR based on the two-stage estimation method (Latimer 2017, Latimer 2018).
+-NCT03151811: Sensitivity analysis which run the analysis only for the target population
+-NCT03391466: Rank preserving structural failure time model {Robins 1991} was used to adjust treatment drop in from standard of care to chimeric antigen receptor T-cell therapy.
+-NCT03594747 (2): Two-stage method (Latimer et al 2014) was also performed to estimate the in-study crossover effect on the post-progression survival (PPS) using data from patients who progressed per IRC assessment before any subsequent anticancer therapy in the control arm only. 
+It counts 2 sensitivity analysis because this comparison is run both for A vs B and B vs C
+-NCT03663205: Two-stage method (Latimer et al 2014) was also performed to estimate the in-study crossover effect on the post-progression survival (PPS) using data from patients who progressed per IRC assessment before any subsequent anticancer therapy in the control arm only.
+-NCT03914612: The sensitivity analysis to stand out was a 2-stage model
 
 ```{r, echo=FALSE}
-hse_llr=dif_TBE_clean[dif_TBE_clean$log_se>0.1 & dif_TBE_clean$log_ratio<(-0.1), ]
-lse_hlr=dif_TBE_clean[dif_TBE_clean$se<(-0.1) & dif_TBE_clean$log_ratio>0.1,]
-hse_trials=unique(hse_llr$NCT)
-lse_trials=unique(lse_hlr$NCT)
-
-#View(data[data$NCT %in% hse_trials & grepl("FS",data$Analysis),])
-#View(data[data$NCT %in% lse_trials & grepl("FS",data$Analysis),])
+case_studies_TBE=dif_TBE_clean[dif_TBE_clean$log_ratio>0.35, ]
+#hse_llr_OS=dif_OS_clean[(dif_OS_clean$log_se>0.1 & dif_OS_clean$log_ratio<(-0.1)), ]
+#lse_hlr_OS=dif_OS_clean[(dif_OS_clean$log_se<(-0.1) & dif_OS_clean$log_ratio>0.1),]
+CS_TBE=unique(case_studies_TBE$NCT)
+#print(data[data$NCT %in% CS_TBE & grepl("FS", data$Analysis),4])
+View((data[data$NCT %in% CS_TBE & grepl("FS", data$Analysis),]))
+#View(data[data$NCT %in% hse_trials_OS & grepl("OS",data$Analysis),])
+#View(data[data$NCT %in% lse_trials_OS & grepl("OS",data$Analysis),])
+table(case_studies_TBE$Type.of.sensitivity.analysis)
 ```
-
+-NCT00836654: The sensitivity analysis that stands out is the one that counted all censored events as PuFS events
+-NCT03173248:The sensitivity analysis that stands out is a Log-rank test stratified by the IRT randomization stratification factors and based on the FAS
+-NCT04008030:The analysis that stands out is by BICR in all 1L randomized patients, but it is not listed as sensitivity analysis but as a secondary endpoint
+-NCT04322539: The analysis that stands out changes the censoring rules to include all the deaths observed during the study in the analysis irrespective of when they occurred
 ## Conclusions
 
 The 60 randomly selected studies that we analysed in this project gave us an idea on the use of sensitivity analyses in oncological RCTs. Even if sensitivity analyses are a very useful practice, especially when dealing with tumour-based endpoints, which are more prone to subjectivity and bias, they are still not planned, nor reported for many studies. The analyses that were reported employed mostly different censoring rules than those used in the primary analysis, and a lower number of them also focused on the different methods and assessment strategies. When comparing these sensitivity analyses with the primary, it was possible to see some effect of Hazard Ratios on the Standard errors, but while the models we ran seemed to indicate a relationship between these two values, analyzing different covariates and accounting for clustering in the different studies has not led to an explanation of this relationship. Using Finite Mixture Models indicates very different trends for both tumour-based endpoints and Overall Survival sensitivity analyses which could be infleunced by the category of sensitivity analyses. Further assessment on new samples of studies would be needed to confirm this hypothesis.
