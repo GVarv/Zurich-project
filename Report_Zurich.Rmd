@@ -786,7 +786,7 @@ p_main_TBE+geom_abline(slope = coeff_TBE, color="black", linetype="dashed", line
 
 round(AIC(m_TBE),2)
 round(BIC(m_TBE),2)
-summary(m_TBE)
+#summary(m_TBE)
 ```
 
 There is a significant relationship between the two variables with estimated slope of `r slope_TBE`
@@ -808,633 +808,23 @@ p_main_OS+geom_abline(slope = coeff_OS, color="black", linetype="dashed", linewi
 
 round(AIC(m_os),2)
 round(BIC(m_os),2)
-summary(m_os)
+#summary(m_os)
 ```
 
-The results for OS seem to show an estimated slope of $-0.18$ in the same direction as for TBE. The $p$-value is larger due to a considerably larger standard error because of a smaller sample size and an increased residual variance.
-
-#### Finite Mixture Model (FMM)
-
-The scatter plots above, especially the one for OS seemed to also suggest the possibility of two different regression lines, so we also examined this possibility using finite mixture models (FMM). Since the scatter plot suggested only two different distribution, we built a model with two components.
-
-Among the sensitivity analyses for TBE, we obtained the components with sizes 62, 129. The estimates, standard error and $p$-values for the different component are reported in the following table:
-
-```{r TBE FMM, echo=FALSE}
-library(flexmix)
-set.seed(4) #We had to add a seed because instability of the model
-model_f_TBE=flexmix(log_ratio ~ 0+log_se, data = dif_TBE_clean, k=2,control = list(nrep = 10) )
-summary(model_f_TBE)
-s_exp_TBE=flexmix::refit(model_f_TBE)
-s_c1_TBE=as.data.frame(s_exp_TBE@components[[1]][["Comp.1"]])
-s_c1_TBE=s_c1_TBE %>% mutate_if(is.numeric, ~round(., 5))
-s_c2_TBE=as.data.frame(s_exp_TBE@components[[1]][["Comp.2"]])
-s_c2_TBE=s_c2_TBE %>% mutate_if(is.numeric, ~round(., 5))
-
-s_exp_tab_TBE <- cbind(
-  Variable = rownames(s_c1_TBE),
-  s_c1_TBE$Estimate, s_c1_TBE$`Std. Error`, s_c1_TBE$`Pr(>|z|)`,
-  s_c2_TBE$Estimate, s_c2_TBE$`Std. Error`, s_c2_TBE$`Pr(>|z|)`
-)
-colnames(s_exp_tab_TBE) <- c("Variable",
-                         "Estimate", "Std. Error", "P-value",
-                         "Estimate", "Std. Error", "P-value")
-s_exp_tab_df_TBE <- as.data.frame(s_exp_tab_TBE)
-```
-
-```{r Components table TBE, echo=FALSE}
-# Create kable with multi-level header
-kable(s_exp_tab_df_TBE, booktabs = TRUE, align = c("l", rep("c", 6))) %>%
-  add_header_above(c(" " = 1, "Component 1" = 3, "Component 2" = 3))
-#View(s_exp_tab_df_TBE)
-```
-
-These results show a very strong difference in the strength of the estimate for the logarithm of the ratio between the components, but they also show that only one component is significant.
-To visualize these results, we plotted the regression lines for both components on the scatter plot
-
-```{r Plot both regressions, echo=FALSE}
-coeff_TBE<-parameters(model_f_TBE)          
-# intercept_TBE1<-coeff_TBE[1,1]
-# intercept_TBE2<-coeff_TBE[1,2]
-#slope_TBE1<- coeff_TBE[2,1]
-#slope_TBE2<- coeff_TBE[2,2]
-
-# p_main_TBE+
-#   geom_abline(intercept = intercept_TBE1, slope = slope_TBE1, color="deepskyblue2", linetype="dashed", linewidth=0.9)+
-#   geom_abline(intercept = intercept_TBE2, slope = slope_TBE2, color="firebrick1", linetype="dashed", linewidth=0.9)
-
-library(gridExtra)
-library(grid)
-components <- c("Component 1", "Component 2")
-colors <- c("deepskyblue2", "firebrick1")
-linetypes <- c("dashed", "dashed")
-
-# Create the legend grob
-line_legend <- legendGrob(
-  labels = components,
-  pch = NA,  # no points
-  gp = gpar(
-    col = colors,       # line colors
-    lwd = 2,            # line width
-    lty = c(2, 2)       # dashed lines
-  )
-)
-
-
-p_main_TBE_no_legend <- p_main_TBE + theme(legend.position = "none")+
-  geom_abline(slope = coeff_TBE[1,1], color="deepskyblue2", linetype="dashed", linewidth=0.9)+
-  geom_abline(slope = coeff_TBE[1,2], color="firebrick1", linetype="dashed", linewidth=0.9)
-grid.arrange(
-  p_main_TBE_no_legend,
-  line_legend,
-  ncol = 2,                    
-  widths = c(4, 1)              
-)
-
-```
-
-```{r Distributions of categories TBE, include=FALSE}
-inc=c("NCT","Censoring", "Methods", "Population")
-#inc=c("NCT","Type.of.sensitivity.analysis")
-red_TBE=dif_TBE_clean[,inc]
-post_TBE=model_f_TBE@posterior$scaled
-colnames(post_TBE)=c("post_C1","post_C2")
-red_clus_TBE=as.data.frame(cbind(red_TBE,post_TBE,Cluster=model_f_TBE@cluster))
-
-
-clust_TBE <- red_clus_TBE %>%
-  group_by(Cluster) %>%
-  group_split()
-
-#table(clust_TBE[[1]]["Type.of.sensitivity.analysis"])/nrow(clust_TBE[[1]])*100
-pcens1=table(clust_TBE[[1]]["Censoring"])["Yes"]#/nrow(clust_TBE[[1]])*100
-pmeth1=table(clust_TBE[[1]]["Methods"])["Yes"]#/nrow(clust_TBE[[1]])*100
-ppop1=table(clust_TBE[[1]]["Population"])["Yes"]#/nrow(clust_TBE[[1]])*100
-
-pcens2=table(clust_TBE[[2]]["Censoring"])["Yes"]#/nrow(clust_TBE[[2]])*100
-pmeth2=table(clust_TBE[[2]]["Methods"])["Yes"]#/nrow(clust_TBE[[2]])*100
-ppop2=table(clust_TBE[[2]]["Population"])["Yes"]#/nrow(clust_TBE[[2]])*100
-#Need to create a dataset that contains the study information and the cluster information and the posterior probabilities(scaled or unscaled?)
-tab=data.frame(Censoring=c(pcens1,pcens2),Methods=c(pmeth1,pmeth2),Population=c(ppop1,ppop2))
-rownames(tab)=c("Component 1", "Component 2")
-tab_TBE=round(tab/nrow(dif_TBE_clean), digits = 3)*100
-#tab_TBE[] <- lapply(tab_TBE, paste0, '%')
-#Table of how many of each sensitivity analyses in each category (make subsets?)
-
-tab_rel_TBE=tab
-tab_rel_TBE[1,]=(tab_rel_TBE[1,]/nrow(clust_TBE[[1]]))*100
-tab_rel_TBE[2,]=(tab_rel_TBE[2,]/nrow(clust_TBE[[2]]))*100
-
-tab_TBE[] <- lapply(tab_TBE, paste0, '%')
-tab_rel_TBE=round(tab_rel_TBE, digits = 3)
-tab_rel_TBE[] <- lapply(tab_rel_TBE, paste0, '%')
-```
-
-```{r Identify NCTs in components TBE, echo=FALSE}
-NCT1_TBE=as.character(unique(clust_TBE[[1]]$NCT))
-NCT2_TBE=as.character(unique(clust_TBE[[2]]$NCT))
-total_NCT_TBE=as.character(unique(red_clus_TBE$NCT))
-same_TBE=intersect(NCT1_TBE, NCT2_TBE)
-#length(same_TBE)
-diff_TBE=total_NCT_TBE[!total_NCT_TBE %in% same_TBE]
-#length(diff_TBE)
-```
-
-We first looked at the study IDs of the sensitivity analyses in each component and it was possible to see that, out of the `{r} length(unique(total_NCT_TBE))` studies that had sensitivity analyses for TBE, `{r} length(same_TBE)` had some of their sensitivity analyses present in both component and `{r} length(diff_TBE)` had analyses in only one component. This seem to suggest that the component assignation is not related to the study ID.
-
-We then examined the component assignment in the different category of sensitivity analysis to see if it was possible to identify a pattern.
-
-```{r, include=FALSE}
-component_ids_TBE <- clusters(model_f_TBE)
-post_probs_TBE <- round(posterior(model_f_TBE), 3)
-
-# Convert to a data frame
-post_probs_df_TBE <- as.data.frame(post_probs_TBE)
-colnames(post_probs_df_TBE) <- c("Prob_Component_1", "Prob_Component_2")
-
-# Combine with original data
-component_data_TBE <- bind_cols(
-  dif_TBE_clean %>% dplyr::select(NCT, log_se,log_ratio,Methods, Censoring, Population),
-  post_probs_df_TBE,
-  component_ids_TBE
-)%>%
-  mutate(Component = factor(component_ids_TBE))
-```
-
-```{r Plot only Censoring data, include=FALSE}
-plot_data <- component_data_TBE %>%
-  filter(Censoring == "Yes")
-
-ggplot(plot_data,
-       aes(x = log_se, y = log_ratio, color = Component)) +
-  geom_point(size = 2.5, alpha = 0.8) +
-  theme_minimal() +
-  labs(title = "Log Ratio vs log of ratio of SE (Censoring = Yes)",
-       x = "Log of ratio of SE",
-       y = "Log ratio",
-       color = "Component") +
-  scale_color_manual(values = c("1" = "steelblue",
-                                "2" = "firebrick"))
-```
-
-```{r Plot only Methods data TBE, include=FALSE}
-plot_data <- component_data_TBE %>%
-  filter(Methods == "Yes")
-
-ggplot(plot_data,
-       aes(x = log_se, y = log_ratio, color = Component)) +
-  geom_point(size = 2.5, alpha = 0.8) +
-  theme_minimal() +
-  labs(title = "Log Ratio vs log of ratio of SE (Methods = Yes)",
-       x = "Log of ratio of SE",
-       y = "Log ratio",
-       color = "Component") +
-  scale_color_manual(values = c("1" = "steelblue",
-                                "2" = "firebrick"))
-
-```
-
-```{r Plot only Population data TBE, include=FALSE}
-plot_data <- component_data_TBE %>%
-  filter(Population == "Yes")
-
-ggplot(plot_data,
-       aes(x = log_se, y = log_ratio, color = Component)) +
-  geom_point(size = 2.5, alpha = 0.8) +
-  theme_minimal() +
-  labs(title = "Log Ratio vs log of ratio of SE (Population = Yes)",
-       x = "Log of ratio of SE",
-       y = "Log ratio",
-       color = "Component") +
-  scale_color_manual(values = c("1" = "steelblue",
-                                "2" = "firebrick"))
-```
-
-```{r Combine subplot TBE, fig.width=10, echo=FALSE}
-library(ggplot2)
-library(dplyr)
-
-long_data <- component_data_TBE %>%
-  filter(Censoring == "Yes" |
-         Methods == "Yes" |
-         Population == "Yes") %>%
-  mutate(
-    Category = case_when(
-      Censoring == "Yes" ~ "Censoring",
-      Methods == "Yes" ~ "Methods",
-      Population == "Yes" ~ "Population"
-    )
-  )
-
-ggplot(long_data,
-       aes(x = log_se, y = log_ratio, color = Component)) +
-  geom_point(size = 2.5, alpha = 0.8) +
-  facet_wrap(~ Category) +
-  theme_minimal() +
-  scale_color_manual(
-    values = c("1" = "#1B4F72",   # dark blue
-               "2" = "#922B21")   # dark red
-  ) +
-  theme(
-    panel.border = element_rect(color = "black",
-                                fill = NA,
-                                linewidth = 0.8),
-    strip.background = element_rect(fill = "grey85",
-                                     color = "black",
-                                     linewidth = 0.8),
-    strip.text = element_text(face = "bold")
-  ) +
-  labs(color = "Component",
-       x = "Log ratio of SE",
-       y = "Log ratio")
-
-```
-
-For **OS** the FMM distribution between component was:
-
-```{r Table of results OS M1, echo=FALSE}
-#set.seed(5) #Results are way less unstable for OS as we get the same results, just with flipped components
-model_f_os=flexmix(log_ratio ~ 0+log_se, data = dif_OS_clean, k=2)
-summary(model_f_os)
-s_exp=flexmix::refit(model_f_os)
-s_c1=as.data.frame(s_exp@components[[1]][["Comp.1"]])
-s_c1=s_c1 %>% mutate_if(is.numeric, ~round(., 5))
-s_c2=as.data.frame(s_exp@components[[1]][["Comp.2"]])
-s_c2=s_c2 %>% mutate_if(is.numeric, ~round(., 5))
-
-s_exp_tab_OS <- cbind(
-  Variable = rownames(s_c1),
-  s_c1$Estimate, s_c1$`Std. Error`, s_c1$`Pr(>|z|)`,
-  s_c2$Estimate, s_c2$`Std. Error`, s_c2$`Pr(>|z|)`
-)
-colnames(s_exp_tab_OS) <- c("Variable",
-                         "Estimate", "Std. Error", "P-value",
-                         "Estimate", "Std. Error", "P-value")
-s_exp_tab_df_OS <- as.data.frame(s_exp_tab_OS)
-
-# Create kable with multi-level header
-kable(s_exp_tab_df_OS, booktabs = TRUE, align = c("l", rep("c", 6))) %>%
-  add_header_above(c(" " = 1, "Component 1" = 3, "Component 2" = 3))
-#View(s_exp_tab_df_OS)
-
-```
-
-```{r Distribution of categories OS, include=FALSE}
-red_OS=dif_OS_clean[,inc]
-post_OS=model_f_os@posterior$scaled
-colnames(post_OS)=c("post_C1","post_C2")
-red_clus_OS=as.data.frame(cbind(red_OS,post_OS,Cluster=model_f_os@cluster))
-
-
-clust_OS <- red_clus_OS %>%
-  group_by(Cluster) %>%
-  group_split()
-
-#table(clust_TBE[[1]]["Type.of.sensitivity.analysis"])/nrow(clust_TBE[[1]])*100
-pcens1=table(clust_OS[[1]]["Censoring"])["Yes"]#/nrow(clust_OS[[1]])*100
-pmeth1=table(clust_OS[[1]]["Methods"])["Yes"]#/nrow(clust_OS[[1]])*100
-ppop1=table(clust_OS[[1]]["Population"])["Yes"]#/nrow(clust_OS[[1]])*100
-
-pcens2=table(clust_OS[[2]]["Censoring"])["Yes"]#/nrow(clust_OS[[2]])*100
-pmeth2=table(clust_OS[[2]]["Methods"])["Yes"]#/nrow(clust_OS[[2]])*100
-ppop2=table(clust_OS[[2]]["Population"])["Yes"]#/nrow(clust_OS[[2]])*100
-
-tab=data.frame(Censoring=c(pcens1,pcens2),Methods=c(pmeth1,pmeth2),Population=c(ppop1,ppop2))
-rownames(tab)=c("Component 1", "Component 2")
-tab_OS=round(tab/nrow(dif_OS_clean), digits = 3)*100
-#tab_OS[] <- lapply(tab_OS, paste0, '%')
-#Table of how many of each sensitivity analyses in each category (make subsets?)
-
-tab_rel_OS=tab
-tab_rel_OS[1,]=tab_rel_OS[1,]/nrow(clust_OS[[1]])*100
-tab_rel_OS[2,]=tab_rel_OS[2,]/nrow(clust_OS[[2]])*100
-
-tab_OS[] <- lapply(tab_OS, paste0, '%')
-tab_rel_OS=round(tab_rel_OS, digits = 2)
-tab_rel_OS[] <- lapply(tab_rel_OS, paste0, '%')
-```
-
-```{r Identify NCTs in components OS, echo=FALSE}
-NCT1_OS=as.character(unique(clust_OS[[1]]$NCT))
-NCT2_OS=as.character(unique(clust_OS[[2]]$NCT))
-total_NCT_OS=as.character(unique(red_clus_OS$NCT))
-same_OS=intersect(NCT1_OS, NCT2_OS) 
-diff_OS=total_NCT_OS[!total_NCT_OS %in% same_OS]
-```
-
-The study IDs for OS are more divided among the components, since `{r} length(same_OS)` studies out of `{r} length(unique(total_NCT_OS))` are present in both components, while `{r} length(diff_OS)` are present in only one of the two.
-
-```{r, include=FALSE}
-component_ids_OS <- clusters(model_f_os)
-post_probs_OS <- round(posterior(model_f_os), 3)
-
-# Convert to a data frame
-post_probs_df_OS <- as.data.frame(post_probs_OS)
-colnames(post_probs_df_OS) <- c("Prob_Component_1", "Prob_Component_2")
-
-# Combine with original data
-component_data_OS <- bind_cols(
-  dif_OS_clean %>% dplyr::select(NCT, log_se, log_ratio,Methods, Censoring, Population),
-  post_probs_df_OS, 
-  component_ids_OS
-)%>%
-  mutate(Component = factor(component_ids_OS))
-```
-
-```{r Plot FMM OS, echo=FALSE}
-coeff_OS<-parameters(model_f_os)          
-# intercept_OS1<-coeff_OS[1,1]
-# intercept_OS2<-coeff_OS[1,2]
-# slope_OS1<- coeff_OS[2,1]
-# slope_OS2<- coeff_OS[2,2]
-
-components <- c("Component 1", "Component 2")
-colors <- c("deepskyblue2", "firebrick1")
-linetypes <- c("dashed", "dashed")
-
-# Create the legend grob
-line_legend <- legendGrob(
-  labels = components,
-  pch = NA,  # no points
-  gp = gpar(
-    col = colors,       # line colors
-    lwd = 2,            # line width
-    lty = c(2, 2)       # dashed lines
-  )
-)
-
-
-p_main_OS_no_legend <- p_main_OS + theme(legend.position = "none")+
-  geom_abline(slope = coeff_OS[1,1], color="deepskyblue2", linetype="dashed", linewidth=0.9)+
-  geom_abline(slope = coeff_OS[1,2], color="firebrick1", linetype="dashed", linewidth=0.9)
-grid.arrange(
-  p_main_OS_no_legend,
-  line_legend,
-  ncol = 2,                     # plot on left, legend on right
-  widths = c(4, 1)              # adjust relative sizes
-)
-
-```
-
-We also plotted the component assignment for the different categories of sensitivity analyses:
-
-```{r Censoring only OS, include=FALSE}
-plot_data <- component_data_OS %>%
-  filter(Censoring == "Yes")
-
-p_cens_OS=ggplot(plot_data,
-       aes(x = log_se, y = log_ratio, color = Component)) +
-  geom_point(size = 2.5, alpha = 0.8) +
-  theme_minimal() +
-  labs(title = "Log Ratio vs log of ratio of SE (Censoring = Yes)",
-       x = "Log of ratio of SE",
-       y = "Log ratio",
-       color = "Component") +
-  scale_color_manual(values = c("1" = "steelblue",
-                                "2" = "firebrick"))
-
-
-```
-
-```{r Methods only OS, include=FALSE}
-plot_data <- component_data_OS %>%
-  filter(Methods == "Yes")
-
-p_meth_OS=ggplot(plot_data,
-       aes(x = log_se, y = log_ratio, color = Component)) +
-  geom_point(size = 2.5, alpha = 0.8) +
-  theme_minimal() +
-  labs(title = "Log Ratio vs log of ratio of SE (Methods = Yes)",
-       x = "Log of ratio of SE",
-       y = "Log ratio",
-       color = "Component") +
-  scale_color_manual(values = c("1" = "steelblue",
-                                "2" = "firebrick"))
-```
-
-```{r Population only OS, include=FALSE}
-plot_data <- component_data_OS %>%
-  filter(Population == "Yes")
-
-p_pop_OS=ggplot(plot_data,
-       aes(x = log_se, y = log_ratio, color = Component)) +
-  geom_point(size = 2.5, alpha = 0.8) +
-  theme_minimal() +
-  labs(title = "Log Ratio vs log of ratio of SE (Population = Yes)",
-       x = "Log of ratio of SE",
-       y = "Log ratio",
-       color = "Component") +
-  scale_color_manual(values = c("1" = "steelblue",
-                                "2" = "firebrick"))
-```
-
-```{r Combine subplot OS, fig.width=10, echo=FALSE}
-long_data <- component_data_OS %>%
-  filter(Censoring == "Yes" |
-         Methods == "Yes" |
-         Population == "Yes") %>%
-  mutate(
-    Category = case_when(
-      Censoring == "Yes" ~ "Censoring",
-      Methods == "Yes" ~ "Methods",
-      Population == "Yes" ~ "Population"
-    )
-  )
-
-ggplot(long_data,
-       aes(x = log_se, y = log_ratio, color = Component)) +
-  geom_point(size = 2.5, alpha = 0.8) +
-  facet_wrap(~ Category) +
-  theme_minimal() +
-  scale_color_manual(
-    values = c("1" = "#1B4F72",   # dark blue
-               "2" = "#922B21")   # dark red
-  ) +
-  theme(
-    panel.border = element_rect(color = "black",
-                                fill = NA,
-                                linewidth = 0.8),
-    strip.background = element_rect(fill = "grey85",
-                                     color = "black",
-                                     linewidth = 0.8),
-    strip.text = element_text(face = "bold")
-  ) +
-  labs(color = "Component",
-       x = "Log of ratio of SE",
-       y = "Log ratio")
-
-
-```
-
-Afterwards we looked at the posterior probability of inclusion according to each category, for both TBE and OS. The relative boxplots are shown in the following figures. The mean for each category is also reported as a black line.
-
-```{r PIP TBE, include=FALSE}
-library(tidyr)
-library(dplyr)
-library(ggplot2)
-library(ggbeeswarm)
-
-# Pivot post_C1 and post_C2 long
-pip_long <- red_clus_TBE %>%
-  pivot_longer(
-    cols = starts_with("post_C"),
-    names_to = "Component",
-    values_to = "PIP"
-  ) %>%
-  mutate(Component = factor(Component, levels = c("post_C1", "post_C2")))
-
-# Pivot study variables long
-pip_long_facet <- pip_long %>%
-  pivot_longer(
-    cols = c(Censoring, Methods, Population),
-    names_to = "Variable",
-    values_to = "Group"
-  ) %>%
-  mutate(Group = factor(Group, levels = c("Yes", "No")))
-pip_long_facet$Component <- factor(pip_long_facet$Component,
-                                   levels = c("post_C1", "post_C2"),
-                                   labels = c("Component 1", "Component 2"))
-pip_yes <- pip_long_facet %>% filter(Group == "Yes")
-
-pip_yes_component1 <- pip_yes %>% filter(Component == "Component 1")
-
-ggplot(pip_yes_component1, aes(x = Variable, y = PIP, fill = Component, color = Component)) +
-  geom_boxplot(width = 0.6, outlier.shape = NA, alpha = 0.4, position = position_dodge(0.8)) +
-  geom_quasirandom(width = 0.15, alpha = 0.6, size = 1.5, dodge.width = 0.8) +
-  scale_fill_manual(
-    values = c("Component 1" = "deepskyblue2"),
-    drop = FALSE
-  ) +
-  scale_color_manual(
-    values = c("Component 1" = "deepskyblue2"),
-    drop = FALSE
-  ) +
-  labs(
-    x = "Study Variable",
-    y = "Posterior Inclusion Probability",
-    title = "Posterior Inclusion Probabilities in TBE for each category in Component 1 for TBE"
-)+ theme(legend.position = "none")
-
-  
-
-```
-
-```{r PIP TBE mean, echo=FALSE}
-
-ggplot(pip_yes_component1, aes(x = Variable, y = PIP, fill = Component, color = Component)) +
-  # Boxplot without median line
-  geom_boxplot(
-    width = 0.6,
-    outlier.shape = NA,
-    alpha = 0.4,
-    position = position_dodge(0.8),
-    show.legend = FALSE
-  ) +
-  # Mean as a crossbar (ymin = y = ymax = mean)
-  stat_summary(
-    fun.data = function(x) {
-      m <- mean(x)
-      data.frame(y = m, ymin = m, ymax = m)
-    },
-    geom = "crossbar",
-    width = 0.6,
-    position = position_dodge(0.8),
-    color = "black"
-  ) +
-  # Overlay individual points
-  geom_quasirandom(
-    width = 0.15,
-    alpha = 0.6,
-    size = 1.5,
-    dodge.width = 0.8
-  ) +
-  # Colors
-  scale_fill_manual(values = c("Component 1" = "deepskyblue2"), drop = FALSE) +
-  scale_color_manual(values = c("Component 1" = "deepskyblue2"), drop = FALSE) +
-  # Labels
-  labs(
-    x = "Study Variable",
-    y = "Posterior Inclusion Probability",
-    #title = "Posterior Inclusion Probabilities in TBE for each category in Component 1"
-  ) +
-  theme(legend.position = "none")
-
-```
-
-
-```{r PIP OS, include=FALSE}
-pip_long_OS <- red_clus_OS %>%
-  pivot_longer(
-    cols = starts_with("post_C"),
-    names_to = "Component",
-    values_to = "PIP"
-  ) %>%
-  mutate(Component = factor(Component, levels = c("post_C1", "post_C2")))
-
-# Pivot study variables long
-pip_long_facet_OS <- pip_long_OS %>%
-  pivot_longer(
-    cols = c(Censoring, Methods, Population),
-    names_to = "Variable",
-    values_to = "Group"
-  ) %>%
-  mutate(Group = factor(Group, levels = c("Yes", "No")))
-pip_long_facet_OS$Component <- factor(pip_long_facet_OS$Component,
-                                   levels = c("post_C1", "post_C2"),
-                                   labels = c("Component 1", "Component 2"))
-# Filter for only Component 1
-pip_yes_OS <- pip_long_facet_OS %>% filter(Group == "Yes")
-pip_one_component_OS <- pip_yes_OS %>% 
-  filter(Component == "Component 2")
-
-ggplot(pip_one_component_OS, aes(x = Variable, y = PIP, fill = Component, color = Component)) +
-  geom_boxplot(width = 0.6, outlier.shape = NA, alpha = 0.4, position = position_dodge(0.8)) +
-  geom_quasirandom(width = 0.15, alpha = 0.6, size = 1.5, dodge.width = 0.8) +
-  scale_fill_manual(values = c("Component 2" = "#FF6347")) +
-  scale_color_manual(values = c("Component 2" = "#FF6347")) +
-  labs(
-    x = "Study Variable",
-    y = "Posterior Inclusion Probability",
-    title = "Posterior Inclusion Probabilities by Component for each category in component 2 for OS"
-  ) +
-  theme_minimal() +
-  theme(legend.position = "none")
-
-```
-
-```{r PIP Os mean, fig.width=10, echo=FALSE}
-ggplot(pip_one_component_OS, aes(x = Variable, y = PIP, fill = Component, color = Component)) +
-  geom_boxplot(width = 0.6, outlier.shape = NA, alpha = 0.4, position = position_dodge(0.8)) +
-  stat_summary(
-    fun.data = function(x) {
-      m <- mean(x)
-      data.frame(y = m, ymin = m, ymax = m)
-    },
-    geom = "crossbar",
-    width = 0.6,
-    position = position_dodge(0.8),
-    color = "black"
-  ) +
-  geom_quasirandom(width = 0.15, alpha = 0.6, size = 1.5, dodge.width = 0.8) +
-  scale_fill_manual(values = c("Component 2" = "#FF6347")) +
-  scale_color_manual(values = c("Component 2" = "#FF6347")) +
-  labs(
-    x = "Study Variable",
-    y = "Posterior Inclusion Probability",
-    #title = "Posterior Inclusion Probabilities by Component for each category"
-  ) +
-  theme_minimal() +
-  theme(legend.position = "none")
-```
+The results for OS seem to show an estimated slope of $-0.18$ in the same direction as the ones for TBE. 
 
 #### Linear model with covariates
 
-The boxplots in the previous section suggested that the category of sensitivity analysis has an impact on the model results.
+To identify the possible causes of the relationship between $\log(\frac{SE_{\scriptsize \mbox{Sensitivity}}}{SE_{\scriptsize \mbox{Primary}}})$ and $\log\left(\frac{HR_{\scriptsize \mbox{Sensitivity}}}{HR_{\scriptsize \mbox{Primary}}}\right)$ we added expanded the linear model to include the category identifier of the sensitivity analyses as covariate, as they might have an impact on the number of people at risk or on the number of events.
 
 Changing censoring rules could have an impact on both the number of events and of people at risk at various time, modifying both the HR and standard errors. This is because censoring more individuals reduces the number of people at risk and at prevent any event that these individuals might have had to be included in the analysis. Also, if informative censoring is present, this will impact one arm more than the other, changing between the balance between the number of events in the different arms.
 
 Similarly, using different population for the analysis can also change the relationship between the number of people at risk and the number of events in each arm, which might also impact the standard errors and the HR.
 
 To examine the impact that these changes can have on the analysis we used a linear mixed model that included also the category of sensitivity analysis category as covariate.
+
+To do so we used a dummy variable for each category that would have value 1 if a change in the category was present in the sensitivity analysis and 0 if it did not. This allowed us to consider also the sensitivity analyssi that had changes in multiple categories in each of the right categories at the same time.
+
 
 This covariates model for **TBE** gave the following results:
 
@@ -1457,89 +847,83 @@ round(AIC(m_os_cov),2)
 round(BIC(m_os_cov),2)
 #summary(m_os_cov)
 ```
+From these the results we can see that the category of sensitivity analysis is not relevant neither for *TBE* nor *OS*.
+
 ##### Primary HR as regression variable
+
+We explored then the impact of the initial analysis results, including the interaction between $\log(\frac{SE_{\scriptsize \mbox{Sensitivity}}}{SE_{\scriptsize \mbox{Primary}}})$ and the original HR results for the primary analysis.
+
+The results obtained were the following for *TBE*:
 ```{r Ref HR as covariate TBE}
 mHR_TBE= lm(log_ratio ~ 0+log_se * log(ref_HR), data = dif_TBE_clean)
 summ(mHR_TBE)
 ```
+This would suggest that the HR value of the primary analysis has a small impact on the relationship between $\log(\frac{SE_{\scriptsize \mbox{Sensitivity}}}{SE_{\scriptsize \mbox{Primary}}})$ and $\log\left(\frac{HR_{\scriptsize \mbox{Sensitivity}}}{HR_{\scriptsize \mbox{Primary}}}\right)$, while the interaction term between the logarithm of the ratio of standard errors has a bigger impact in the other direction but a larger p-value. Similarly the logarithm of the ratio of standard error has a bigger impat, in the same direction of the one of the primary HR, but a larger p-value.
+
 ```{r Ref HR as covariate OS}
 mHR_OS= lm(log_ratio ~ 0+log_se * log(ref_HR), data = dif_OS_clean) #Remove methods
 summ(mHR_OS)
 ```
+The results for *OS* presented much larger and non-significant p-values for both the interaction term and the primary HR one, but it also presents a strong significance and a stronger negative coefficient for the logarithm of the ratio of standard errors.
 
 #### Random effect models
 
 Since multiple points of the dataset come from the same RCT, we also fitted a random effect model with the RCT ID as random intercept, in order to take into account the effect that this clustering could have on the analysis
 
-```{r, include=FALSE}
-dif_OS_clean$Type.of.sensitivity.analysis=relevel(as.factor(dif_OS_clean$Type.of.sensitivity.analysis),3)
-levels(dif_OS_clean$Type.of.sensitivity.analysis)
-
-dif_TBE_clean$Type.of.sensitivity.analysis=relevel(as.factor(dif_TBE_clean$Type.of.sensitivity.analysis),4)
-levels(dif_TBE_clean$Type.of.sensitivity.analysis)
-```
+We initially run a simple model with random intercept for each trial.
 
 For the different **TBE**, the results are:
 
 ```{r Random model TBE, warning=FALSE, echo=FALSE}
 
 library(lme4)
-model_TBE=lmer(log_ratio ~ 0+log_se+(1|NCT), data = dif_TBE_clean)
+r_model_TBE=lmer(log_ratio ~ 0+log_se+(1|NCT), data = dif_TBE_clean)
 
-su=as.data.frame(summary(model_TBE)$varcor)
+su=as.data.frame(summary(r_model_TBE)$varcor)
 ICC_TBE=(su[su$grp=="NCT", "sdcor"])**2/((su[su$grp=="NCT", "sdcor"])**2+(su[su$grp=="Residual", "sdcor"])**2)
 
-summary(model_TBE, model.info=FALSE)
+summ(r_model_TBE, model.info=FALSE)
 ```
 
 For **OS** the random effect model shows the following results:
 
 ```{r Random model OS,warning=FALSE, echo=FALSE}
 
-model_OS=lmer(log_ratio ~ 0+log_se+ (1 | NCT), data = dif_OS_clean)
-su=as.data.frame(summary(model_OS)$varcor)
+r_model_OS=lmer(log_ratio ~ 0+log_se+ (1 | NCT), data = dif_OS_clean)
+su=as.data.frame(summary(r_model_OS)$varcor)
 ICC_OS=(su[su$grp=="NCT", "sdcor"])**2/((su[su$grp=="NCT", "sdcor"])**2+(su[su$grp=="Residual", "sdcor"])**2)
-summary(model_OS,model.info=FALSE)
+summ(r_model_OS,model.info=FALSE)
 ```
+For both endpoints the results are very close to the one we obtained for the simple linear regression model.
 
-Then we explore the impact that the type of sensitivity analysis has on the results, adding it as a covariate in the random model.
+Then we included the HR of the primary analsyis as a covariate.
 
-This interaction model for **TBE** gave the following results:
-
-```{r Dummy variable interaction model TBE, echo=FALSE}
-model_TBE_dummycat_inter=lmer(log_ratio ~0+ log_se*Censoring+log_se*Methods+log_se*Population+(1 | NCT), data = dif_TBE_clean)
-summary(model_TBE_dummycat_inter,model.info=FALSE)
+```{r Random model SE TBE}
+r_model_TBE_se=lmer(log_ratio ~ 0+log_se * log(ref_HR)+(1|NCT), data = dif_TBE_clean)
+su=as.data.frame(summary(r_model_TBE_se)$varcor)
+ICC_OS=(su[su$grp=="NCT", "sdcor"])**2/((su[su$grp=="NCT", "sdcor"])**2+(su[su$grp=="Residual", "sdcor"])**2)
+summ(r_model_TBE_se,model.info=FALSE)
 ```
+The results for this random model for *TBE* show that, when accounting for trial provenance using random intercepts, the impact of $\log(\frac{SE_{\scriptsize \mbox{Sensitivity}}}{SE_{\scriptsize \mbox{Primary}}})$ itself decreases while its p-value increases becoming non-significant, but the impact of the interaction between the primary analysis HR and $\log(\frac{SE_{\scriptsize \mbox{Sensitivity}}}{SE_{\scriptsize \mbox{Primary}}})$ increases and its p-value becomes very small.
 
-In the case of **OS**, the model accounting for the interaction gave the following results:
-
-```{r Factor covariates OS, warning=FALSE, echo=FALSE}
-
-model_OS_inter=lmer(log_ratio ~0+ log_se*Censoring+log_se*Methods+log_se*Population+(1 | NCT), data = dif_OS_clean)
-su=as.data.frame(summary(model_OS_inter)$varcor)
-ICC_OS_cat=(su[su$grp=="NCT", "sdcor"])**2/((su[su$grp=="NCT", "sdcor"])**2+(su[su$grp=="Residual", "sdcor"])**2)
-summary(model_OS_inter,model.info=FALSE)
+```{r}
+r_model_OS_se=lmer(log_ratio ~ 0+log_se * log(ref_HR)+(1|NCT), data = dif_OS_clean)
+su=as.data.frame(summary(r_model_OS_se)$varcor)
+ICC_OS=(su[su$grp=="NCT", "sdcor"])**2/((su[su$grp=="NCT", "sdcor"])**2+(su[su$grp=="Residual", "sdcor"])**2)
+summ(r_model_OS_se,model.info=FALSE)
 ```
-
-In this case, the fixed-effect model matrix resulted rank deficient and so the 2 coefficients for the "Population" category were dropped.
+We did not obtain the same type of results for *OS*, but this endpoint also has a much smaller sample size (46v vs 191 data points for TBE) so it has a considerably larger standard error because of a smaller sample size and an increased residual variance. Also there were only few studies that had more than 1 sensitivity analysis for *OS* 
 
 ## Case studies
 
-To illustrate the idea behind the choice of type of sensitivity analysis as covariates we could find some studies that show the link between the ratio of sensitivity analyses and the one of HRs.
+Looking at the regression plots we can identify few outliers. In the case of *OS* there are few data points for which $\log(\frac{SE_{\scriptsize \mbox{Sensitivity}}}{SE_{\scriptsize \mbox{Primary}}})$ does not seem to change much, remaining between 0 and 0.2, but $\log(\frac{HR_{\scriptsize \mbox{Sensitivity}}}{HR_{\scriptsize \mbox{Primary}}})$ present large values.
+We identify these data point and listed the corresponding sensitivity analyses:
 
 ```{r, echo=FALSE}
 case_studies_OS=dif_OS_clean[(dif_OS_clean$log_se>0 & dif_OS_clean$log_se<0.3 & dif_OS_clean$log_ratio<(-0.1)), ]
-#hse_llr_OS=dif_OS_clean[(dif_OS_clean$log_se>0.1 & dif_OS_clean$log_ratio<(-0.1)), ]
-#lse_hlr_OS=dif_OS_clean[(dif_OS_clean$log_se<(-0.1) & dif_OS_clean$log_ratio>0.1),]
-CS_OS=unique(case_studies_OS$NCT)
-View(data[data$NCT %in% CS_OS & grepl("OS", data$Analysis),])
-print(data[data$NCT %in% CS_OS & grepl("OS", data$Analysis),4])
+#CS_OS=unique(case_studies_OS$NCT)
 
-#View(data[data$NCT %in% hse_trials_OS & grepl("OS",data$Analysis),])
-#View(data[data$NCT %in% lse_trials_OS & grepl("OS",data$Analysis),])
-table(case_studies_OS$Type.of.sensitivity.analysis)
-
-
+#table(case_studies_OS$Type.of.sensitivity.analysis)
 ```
 
 - NCT02409342 (3): The sensitivity analyses that stand out are the ones where, Sensitivity analysis of OS for NPT was based on the time interval during, which patients received NPT until the event or censoring time was discounted at 10%, 20%, and 30% for both arms to investigate how the OS results would have looked if the NPT was not available. 
@@ -1551,24 +935,28 @@ It counts 2 sensitivity analysis because this comparison is run both for A vs B 
 -NCT03663205: Two-stage method (Latimer et al 2014) was also performed to estimate the in-study crossover effect on the post-progression survival (PPS) using data from patients who progressed per IRC assessment before any subsequent anticancer therapy in the control arm only.
 -NCT03914612: The sensitivity analysis to stand out was a 2-stage model
 
+
+*TBE* presented also few but less strong outliers, so we also listed those:
 ```{r, echo=FALSE}
 case_studies_TBE=dif_TBE_clean[dif_TBE_clean$log_ratio>0.35, ]
-#hse_llr_OS=dif_OS_clean[(dif_OS_clean$log_se>0.1 & dif_OS_clean$log_ratio<(-0.1)), ]
-#lse_hlr_OS=dif_OS_clean[(dif_OS_clean$log_se<(-0.1) & dif_OS_clean$log_ratio>0.1),]
-CS_TBE=unique(case_studies_TBE$NCT)
-#print(data[data$NCT %in% CS_TBE & grepl("FS", data$Analysis),4])
-View((data[data$NCT %in% CS_TBE & grepl("FS", data$Analysis),]))
-#View(data[data$NCT %in% hse_trials_OS & grepl("OS",data$Analysis),])
-#View(data[data$NCT %in% lse_trials_OS & grepl("OS",data$Analysis),])
-table(case_studies_TBE$Type.of.sensitivity.analysis)
+#CS_TBE=unique(case_studies_TBE$NCT)
+
+#table(case_studies_TBE$Type.of.sensitivity.analysis)
 ```
 -NCT00836654: The sensitivity analysis that stands out is the one that counted all censored events as PuFS events
 -NCT03173248:The sensitivity analysis that stands out is a Log-rank test stratified by the IRT randomization stratification factors and based on the FAS
 -NCT04008030:The analysis that stands out is by BICR in all 1L randomized patients, but it is not listed as sensitivity analysis but as a secondary endpoint
--NCT04322539: The analysis that stands out changes the censoring rules to include all the deaths observed during the study in the analysis irrespective of when they occurred
+-NCT04322539: The analysis that stands out changes the censoring rules to include all the deaths observed during the study in the analysis irrespective of when they occurred.
+This is also the one that is further from the regression line (with log_HR >0.6 while the regression line at that point of log_se is slightly larger than 0)
+
+
 ## Conclusions
 
-The 60 randomly selected studies that we analysed in this project gave us an idea on the use of sensitivity analyses in oncological RCTs. Even if sensitivity analyses are a very useful practice, especially when dealing with tumour-based endpoints, which are more prone to subjectivity and bias, they are still not planned, nor reported for many studies. The analyses that were reported employed mostly different censoring rules than those used in the primary analysis, and a lower number of them also focused on the different methods and assessment strategies. When comparing these sensitivity analyses with the primary, it was possible to see some effect of Hazard Ratios on the Standard errors, but while the models we ran seemed to indicate a relationship between these two values, analyzing different covariates and accounting for clustering in the different studies has not led to an explanation of this relationship. Using Finite Mixture Models indicates very different trends for both tumour-based endpoints and Overall Survival sensitivity analyses which could be infleunced by the category of sensitivity analyses. Further assessment on new samples of studies would be needed to confirm this hypothesis.
+The 60 randomly selected studies that we analysed in this project gave us an idea on the use of sensitivity analyses in oncological RCTs. 
+Even if sensitivity analyses are a very useful practice, especially when dealing with tumour-based endpoints, which are more prone to subjectivity and bias, they are still not planned, nor reported for many studies. 
+The analyses that were reported employed mostly different censoring rules than those used in the primary analysis, and a lower number of them also focused on the different methods and assessment strategies. When comparing these sensitivity analyses with the primary, it was possible to see some effect of Hazard Ratios on the Standard errors. More specifically the analyses we run seemed to point at a relationship between the original value of HR for the primary analysis and a change in the standard errors of sensitivity analyses.
+
+Further assessment on new samples of studies would be needed to confirm this hypothesis.
 
 
 
