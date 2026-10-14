@@ -1,8 +1,12 @@
-
 ## obs1, obs0: observed number of events in intervention and control group
 ## exp1, exp0: expected number of events in intervention and control group
 ## obs1Add, obs0Add: number of events to be added to observed number of events in sensitivity analysis
 ## w: weight describing how the edditional events obs1Add + obs0Add are distributed to the expected number of events
+
+#The expected number of events is calculated under H_0 (assume no difference between the two groups)
+#HR=(obs1/exp1)/(obs0/exp0)= ratio of relative hazard (hazard rate compared to the hazard rate under the null hypothesis) of the two groups
+#Therefore HR=(obs1/obs0)/(exp1/exp0)
+#Following this we have se(log(HR))=sqrt((1/exp1)+(1/exp0), which depends only on the number of events
 
 sensitivity <- function(obs1, obs0, exp1, exp0, obs1Add, obs0Add, w=0.5){
 ## standard error and hazard ratio of primary analysis
@@ -26,6 +30,8 @@ sensitivity <- function(obs1, obs0, exp1, exp0, obs1Add, obs0Add, w=0.5){
     ratioHR <- HRS/HRP
     return(c(ratioSE, ratioHR))
 }
+
+#
 
 myi <- seq(from=-10, to=10, by=1)
 result <- matrix(NA, ncol=2, nrow=length(myi))
