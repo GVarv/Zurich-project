@@ -31,7 +31,7 @@ sensitivity <- function(obs1, obs0, exp1, exp0, obs1Add, obs0Add, w=0.5){
     return(c(ratioSE, ratioHR))
 }
 
-#
+#If exp0 has increased, but not exp1, then the HR will increase (which is what we observe in our analysis)
 
 myi <- seq(from=-10, to=10, by=1)
 result <- matrix(NA, ncol=2, nrow=length(myi))
@@ -88,3 +88,6 @@ plot(result, type="b", xlab="ratio of standard errors", ylab="ratio of hazard ra
 title(paste("Primary hazard ratio =", as.character(round(HR, 2))))
 abline(h=1, lty=2)
 abline(v=1, lty=2)
+
+#N.B. the sum of expected events must always equal the sum of observed ones, so if the expected number of events increase in the control group but not in the intervention, the amount of observed must have increased as well in one or both groups.
+#In our empirical analysis it seems that the ratio of exp1/exp0 changes in sensitivity analyses more than the ratio of obs1/obs0 does.
