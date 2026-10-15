@@ -1,5 +1,7 @@
 ---
 title: "Zurich Report"
+bibliography: references.bib
+link-citations: true
 output:
   pdf_document:
     keep_tex: true
@@ -22,19 +24,21 @@ options(kableExtra.html.bsTable = TRUE)
 
 ## Introduction
 
-An essential part of oncological research is based on survival analysis, as one of the main goals is to reduce mortality in patients, as well as increase the time without disease progression. Overall survival (OS), defined as the time from randomisation to death, is seen as the gold standard in oncology clinical trials, as it is easy to measure, since we usually have a precise time for death. It is also very objective, as death is a well-defined endpoint and its measurement cannot be biased by the researcher’s assessment. Moreover, the censoring rules, which are the set of scenarios that describe when a patient will be censored, employed in the analysis of OS tend to be simple and consistent among trials, reducing the possibility of bias. At the same time, OS requires very long follow-up periods and its usefulness is limited in the case of slow-progressing diseases with a long survival expectancy, as there is a high chance of intercurrent events or changes in treatment.
+An essential part of oncological research is based on survival analysis, as one of the main goals is to reduce mortality in patients, as well as increase the time without disease progression[@wilson2015]. Overall survival (OS), defined as the time from randomisation to death, is seen as the gold standard in oncology clinical trials[@gormley2025], as it is easy to measure, since we usually have a precise time for death. It is also very objective, as death is a well-defined endpoint and its measurement cannot be biased by the researcher’s assessment. Moreover, the censoring rules, which are the set of scenarios that describe when a patient will be censored, employed in the analysis of OS tend to be simple and consistent among trials, reducing the possibility of bias. At the same time, OS requires very long follow-up periods and its usefulness is limited in the case of slow-progressing diseases with a long survival expectancy, as there is a high chance of intercurrent events or changes in treatment[@kilickap].
 
-These are some of the reasons why tumour-based endpoints are also widely accepted. Among the most common ones, there are:
+These are some of the reasons why surrogate endpoints based on tumour assessment are widely accepted, even if they are continuous endpoints measured by discreet[@wilson2015] assessmenta nd therefore rely on the timing of the investigation.[@wilson2015]
 
--   Progression-Free Survival (PFS), defined as the time from randomisation until the first evidence of disease progression or death.
+The most common tumour-based endpoints (are:
 
--   Disease-Free Survival (DFS), defined as the time from randomisation until evidence of disease recurrence.
+-   Progression-Free Survival (PFS), defined as the time from randomisation until the first evidence of disease progression or death[@progress2011].
 
--   Event-Free Survival (EFS), defined as the time from randomisation to an event which may include disease progression, discontinuation of the treatment for any reason, or death.
+-   Disease-Free Survival (DFS), defined as the time from randomisation until evidence of disease recurrence[@disease-2011].
 
--   Relapse-Free Survival (RFS), defined as the length of time after primary treatment that the patient survives without any signs or symptoms of that cancer.
+-   Event-Free Survival (EFS), defined as the time from randomisation to an event which may include disease progression, discontinuation of the treatment for any reason, or death[@event-fr2011].
 
-The choice of tumour-based endpoint depends on the type of tumour studied, but they are all subject to the possibility of bias. Therefore, their use is more controversial compared with OS, due to the subjectivity of tumour assessment. These endpoints also rely more on how different scenarios are accounted for as that can affect whether some and until which points some patients are included in the analyses. This means that they are more prone to obtaining different results depending on the type of primary analysis and censoring rules employed, and, therefore, to bias.
+-   Relapse-Free Survival (RFS), defined as the length of time after primary treatment that the patient survives without any signs or symptoms of that cancer[@relapse-].
+
+The choice of tumour-based endpoint depends on the type of tumour studied[@kilickap], but they are all subject to the possibility of bias[@wilson2015]. Therefore, their use is more controversial compared with OS, due to the subjectivity of tumour assessment. These endpoints also rely more on how different scenarios are accounted for as that can affect whether some and until which points some patients are included in the analyses. This means that they are more prone to obtaining different results depending on the type of primary analysis and censoring rules employed[@lesan2024], and, therefore, to bias.
 
 To evaluate how dependent the primary results are on methodological choices and assess their robustness and the potential impact of bias, sensitivity analyses are often employed. These analyses reassess study outcomes with varying methodologies, assumptions, and/or censoring rules. However, the choice of which primary and sensitivity analyses to include in the study remains a subjective one.
 
@@ -50,7 +54,7 @@ Our main project aims to:
 
 We identified all oncologic indications that received a positive opinion from the Committee for Medicinal Products for Human Use (CHMP) between January 01, 2020 and December 31, 2024. Using the European public assessment report (EPAR), we then identified 223 randomised controlled trials (RCTs) referred to as ‘main studies’.
 
-We used the results of an earlier audit of data sharing by pharmaceutical companies for oncology trials, to calculate the size of the sample needed for our study. This previous paper found that only 34% of trials that supported FDA approval between 2011 and 2021 had accessible IPD. We used 34% as the expected proportion of reproducible trials and 12% as the half-width of the 95% CI and obtained 60 trials as required sample size for our study. Therefore we selected 60 RCTs using the sampling function \texttt{sample()} implemented in R, setting a seed for computational reproducibility.
+We used the results of an earlier audit of data sharing by pharmaceutical companies for oncology trials, to calculate the size of the sample needed for our study. This previous paper found that only 34% of trials that supported FDA approval between 2011 and 2021 had accessible IPD[@hopkins2023]. We used 34% as the expected proportion of reproducible trials and 12% as the half-width of the 95% CI and obtained 60 trials as required sample size for our study. Therefore we selected 60 RCTs using the sampling function \texttt{sample()} implemented in R, setting a seed for computational reproducibility.
 
 During the review of the documents of the selected trials, it was noticed that two of them did not report any analyses for neither OS nor any tumour based endpoint. They were removed from the sample and two more were randomly selected using the same function and seed but removing the already selected studies from the pool of selectable studies.
 
@@ -85,118 +89,6 @@ all_cats <- sort(unique(unlist(data$`Type of sensitivity analysis`)))
 split_df_grouped <- data %>%
   group_by(NCT) %>%
   group_split()
-```
-
-```{r Forest plots, warning=FALSE, echo=FALSE, include=FALSE}
-
-library(forestplot)
-w <- c()
-n <- c()
-pdf_files <- c()
-
-for (i in seq_along(split_df_grouped)) {
-  NCT1 <- split_df_grouped[[i]]
-  NCT_name <- unique(NCT1$NCT)
-  #print(paste("Processing NCT:", NCT_name))
-  
-  # Coerce columns to character first inside the loop (in case they are factors)
-  NCT1$HR <- as.character(NCT1$HR)
-  NCT1$`CI Lower bound` <- as.character(NCT1$`CI Lower bound`)
-  NCT1$`CI upper bound` <- as.character(NCT1$`CI upper bound`)
-  
-  # Find rows with NA HR in original data
-  x <- c()
-  for (j in 1:nrow(NCT1)) {
-    if (is.na(NCT1$HR[j])) {
-      #print(paste(NCT1$Analysis[j], "No HR value"))
-      x <- c(x, j)
-      n <- c(n, NCT_name)
-    }
-  }
-  
-  # Safely coerce to numeric inside the loop on cleaned character columns
-  HR <- suppressWarnings(as.numeric(NCT1$HR))
-  CI_lower <- suppressWarnings(as.numeric(NCT1$`CI Lower bound`))
-  CI_upper <- suppressWarnings(as.numeric(NCT1$`CI upper bound`))
-  
-  for (k in 1:nrow(NCT1)) {
-    if (is.na(HR[k]) & !is.na(NCT1$HR[k])) {
-      #print(paste(NCT_name, NCT1$Analysis[k], "has no HR, but reported as:", NCT1$HR[k]))
-      x <- c(x, k)
-      w <- c(w, NCT_name)
-    }
-  }
-  
-  if (length(x) > 0) {
-    NCT1 <- NCT1[-x, ]
-    HR <- HR[-x]
-    CI_lower <- CI_lower[-x]
-    CI_upper <- CI_upper[-x]
-  }
-  
-  if (nrow(NCT1) == 0) {
-    #cat(" -", NCT_name, ": No valid data for plotting\n")
-    next
-  }
-  
-  labeltext <- rbind(
-    c("Analysis", "HR (95% CI)"),
-    cbind(NCT1$Analysis, sprintf("%.3f (%.3f–%.3f)", HR, CI_lower, CI_upper))
-  )
-  
-  mean  <- c(NA, HR)
-  lower <- c(NA, CI_lower)
-  upper <- c(NA, CI_upper)
-  
-  pdf_file <- paste0("forestplot_", NCT_name, ".pdf")
-  
-  # Calculate number of rows: +1 for header
-  n_rows <- nrow(NCT1) + 1
-  
-  # Dynamically set PDF height in inches (approx. 1.1 inches per row)
-  row_height_in <- 1.1
-  margin_in <- 2
-  pdf_height <- row_height_in * n_rows + margin_in
-  
-  pdf_width <- 11  # Wide enough for labels and CI
-  
-  # Save the plot as PDF
-  pdf(pdf_file, width = pdf_width, height = pdf_height)
-  #grid::grid.newpage()  # Ensure grid graphics page is ready
-
-  print(
-    forestplot(
-      labeltext,
-      mean = mean,
-      lower = lower,
-      upper = upper,
-      zero = 1,
-      boxsize = 0.2,
-      line.margin = 0.5,
-      xlog = TRUE,
-      title = NCT_name,
-      col = fpColors(box = "blue", line = "black", zero = "gray50"),
-      lwd.zero = 3,
-      txt_gp = fpTxtGp(
-        xlab = gpar(fontsize = 14),
-        ticks = gpar(fontsize = 20)
-      ),
-      new_page = FALSE,
-      graphwidth = unit(3, "in")
-    )
-  )
-    
-  dev.off()
-  pdf_files <- c(pdf_files, pdf_file)
-}
-
-library(qpdf)
-
-# List your PDF files
-pdf_files <- list.files(pattern = "^forestplot_.*\\.pdf$")
-
-# Combine them into one PDF
-pdf_combine(input = pdf_files, output = "combined_forestplots.pdf")
 ```
 
 Moreover, sensitivity analyses were divided into three categories according to the type of sensitivity analysis. Sensitivity analyses were categorised as "Censoring rules" when the main difference with the primary analysis was the set of censoring rules defining in which situations patients should be censored and how their data should be included in the analysis. They were defined as changes in "Population" when the sensitivity analysis was focusing on a different population or a subset of the primary analysis's population.
@@ -517,8 +409,7 @@ ggplot(df, aes(x = value, fill = group)) +
   theme_minimal()
 ```
 
-It is worth noticing that the number of studies that do not report any sensitivity analysis at all is quite high for both endpoints. 40 studies did not report any sensitivity analysis for OS and 19 did not report any sensitivity analyses for TBE. The fact that $\frac{2}{3}$ of studies did not have any sensitivity analyses for OS is not surprising, as that is considered a more stable and objective endpoint.
-We then looked at these sensitivity analyses were distributed among the different categories and the results are shown in the next figure.
+It is worth noticing that the number of studies that do not report any sensitivity analysis at all is quite high for both endpoints. 40 studies did not report any sensitivity analysis for OS and 19 did not report any sensitivity analyses for TBE. The fact that $\frac{2}{3}$ of studies did not have any sensitivity analyses for OS is not surprising, as that is considered a more stable and objective endpoint. We then looked at these sensitivity analyses were distributed among the different categories and the results are shown in the next figure.
 
 ```{r Frequency percentage, echo=FALSE}
 freq_OS=as.data.frame(table(dif_OS_clean$Type.of.sensitivity.analysis))
@@ -627,8 +518,7 @@ ggplot(df, aes(x = endpoint, y = SE, fill = endpoint)) +
   )
 ```
 
-The logarithm of the ratio of standard errors now shows more variability for OS compared to TBE. 
-The ratios vary around 0 for TBE, but tend to be larger than 0 for OS. This suggests that the standard errors of sensitivity analyses for OS tend to be larger than the standard errors for the primary analysis. This is not the case for TBE.
+The logarithm of the ratio of standard errors now shows more variability for OS compared to TBE. The ratios vary around 0 for TBE, but tend to be larger than 0 for OS. This suggests that the standard errors of sensitivity analyses for OS tend to be larger than the standard errors for the primary analysis. This is not the case for TBE.
 
 To summarise, the distribution of $\log(\frac{SE_{Sensitivity}}{SE_{Primary}})$ is:
 
@@ -786,7 +676,7 @@ p_main_TBE+geom_abline(slope = coeff_TBE, color="black", linetype="dashed", line
 
 round(AIC(m_TBE),2)
 round(BIC(m_TBE),2)
-#summary(m_TBE)
+summary(m_TBE)
 ```
 
 There is a significant relationship between the two variables with estimated slope of `r slope_TBE`
@@ -808,10 +698,10 @@ p_main_OS+geom_abline(slope = coeff_OS, color="black", linetype="dashed", linewi
 
 round(AIC(m_os),2)
 round(BIC(m_os),2)
-#summary(m_os)
+summary(m_os)
 ```
 
-The results for OS seem to show an estimated slope of $-0.18$ in the same direction as the ones for TBE. 
+The results for OS seem to show an estimated slope of $-0.18$ in the same direction as the ones for TBE.
 
 #### Linear model with covariates
 
@@ -825,7 +715,6 @@ To examine the impact that these changes can have on the analysis we used a line
 
 To do so we used a dummy variable for each category that would have value 1 if a change in the category was present in the sensitivity analysis and 0 if it did not. This allowed us to consider also the sensitivity analyssi that had changes in multiple categories in each of the right categories at the same time.
 
-
 This covariates model for **TBE** gave the following results:
 
 ```{r Covariate model TBE, echo=FALSE}
@@ -834,7 +723,7 @@ m_TBE_cov=lm(log_ratio ~0+ log_se*Censoring+log_se*Methods+log_se*Population, da
 summ(m_TBE_cov,model.info=FALSE)
 round(AIC(m_TBE_cov),2)
 round(BIC(m_TBE_cov),2)
-#summary(m_TBE_cov)
+summary(m_TBE_cov)
 ```
 
 The results for same model for **OS** were the following:
@@ -845,8 +734,9 @@ summ(m_os_cov,model.info=FALSE)
 
 round(AIC(m_os_cov),2)
 round(BIC(m_os_cov),2)
-#summary(m_os_cov)
+summary(m_os_cov)
 ```
+
 From these the results we can see that the category of sensitivity analysis is not relevant neither for *TBE* nor *OS*.
 
 ##### Primary HR as regression variable
@@ -854,16 +744,24 @@ From these the results we can see that the category of sensitivity analysis is n
 We explored then the impact of the initial analysis results, including the interaction between $\log(\frac{SE_{\scriptsize \mbox{Sensitivity}}}{SE_{\scriptsize \mbox{Primary}}})$ and the original HR results for the primary analysis.
 
 The results obtained were the following for *TBE*:
+
 ```{r Ref HR as covariate TBE}
 mHR_TBE= lm(log_ratio ~ 0+log_se * log(ref_HR), data = dif_TBE_clean)
-summ(mHR_TBE)
+#mHR_TBE= lm(log_ratio ~ 0+log(ref_HR), data = dif_TBE_clean)
+summary(mHR_TBE)
+round(AIC(mHR_TBE),2)
+round(BIC(mHR_TBE),2)
 ```
+
 This would suggest that the HR value of the primary analysis has a small impact on the relationship between $\log(\frac{SE_{\scriptsize \mbox{Sensitivity}}}{SE_{\scriptsize \mbox{Primary}}})$ and $\log\left(\frac{HR_{\scriptsize \mbox{Sensitivity}}}{HR_{\scriptsize \mbox{Primary}}}\right)$, while the interaction term between the logarithm of the ratio of standard errors has a bigger impact in the other direction but a larger p-value. Similarly the logarithm of the ratio of standard error has a bigger impat, in the same direction of the one of the primary HR, but a larger p-value.
 
 ```{r Ref HR as covariate OS}
 mHR_OS= lm(log_ratio ~ 0+log_se * log(ref_HR), data = dif_OS_clean) #Remove methods
-summ(mHR_OS)
+summary(mHR_OS)
+round(AIC(mHR_OS),2)
+round(BIC(mHR_OS),2)
 ```
+
 The results for *OS* presented much larger and non-significant p-values for both the interaction term and the primary HR one, but it also presents a strong significance and a stronger negative coefficient for the logarithm of the ratio of standard errors.
 
 #### Random effect models
@@ -875,7 +773,7 @@ We initially run a simple model with random intercept for each trial.
 For the different **TBE**, the results are:
 
 ```{r Random model TBE, warning=FALSE, echo=FALSE}
-
+library(performance)
 library(lme4)
 r_model_TBE=lmer(log_ratio ~ 0+log_se+(1|NCT), data = dif_TBE_clean)
 
@@ -883,6 +781,11 @@ su=as.data.frame(summary(r_model_TBE)$varcor)
 ICC_TBE=(su[su$grp=="NCT", "sdcor"])**2/((su[su$grp=="NCT", "sdcor"])**2+(su[su$grp=="Residual", "sdcor"])**2)
 
 summ(r_model_TBE, model.info=FALSE)
+
+# Fitted vs observed correlation squared
+fitted_vals <- fitted(r_model_TBE)
+r2_manual <- cor(fitted_vals, dif_TBE_clean$log_se)^2
+r2(r_model_TBE)
 ```
 
 For **OS** the random effect model shows the following results:
@@ -893,17 +796,25 @@ r_model_OS=lmer(log_ratio ~ 0+log_se+ (1 | NCT), data = dif_OS_clean)
 su=as.data.frame(summary(r_model_OS)$varcor)
 ICC_OS=(su[su$grp=="NCT", "sdcor"])**2/((su[su$grp=="NCT", "sdcor"])**2+(su[su$grp=="Residual", "sdcor"])**2)
 summ(r_model_OS,model.info=FALSE)
+fitted_vals <- fitted(r_model_OS)
+r2_manual <- cor(fitted_vals, dif_OS_clean$log_se)^2
+r2(r_model_OS)
 ```
+
 For both endpoints the results are very close to the one we obtained for the simple linear regression model.
 
 Then we included the HR of the primary analsyis as a covariate.
 
 ```{r Random model SE TBE}
-r_model_TBE_se=lmer(log_ratio ~ 0+log_se * log(ref_HR)+(1|NCT), data = dif_TBE_clean)
+r_model_TBE_se=lmer(log_ratio ~0+log_se * log(ref_HR)+(1|NCT), data = dif_TBE_clean)
 su=as.data.frame(summary(r_model_TBE_se)$varcor)
 ICC_OS=(su[su$grp=="NCT", "sdcor"])**2/((su[su$grp=="NCT", "sdcor"])**2+(su[su$grp=="Residual", "sdcor"])**2)
 summ(r_model_TBE_se,model.info=FALSE)
+fitted_vals <- fitted(r_model_TBE_se)
+r2_manual <- cor(fitted_vals, dif_TBE_clean$log_se)^2
+r2(r_model_TBE_se)
 ```
+
 The results for this random model for *TBE* show that, when accounting for trial provenance using random intercepts, the impact of $\log(\frac{SE_{\scriptsize \mbox{Sensitivity}}}{SE_{\scriptsize \mbox{Primary}}})$ itself decreases while its p-value increases becoming non-significant, but the impact of the interaction between the primary analysis HR and $\log(\frac{SE_{\scriptsize \mbox{Sensitivity}}}{SE_{\scriptsize \mbox{Primary}}})$ increases and its p-value becomes very small.
 
 ```{r}
@@ -911,13 +822,16 @@ r_model_OS_se=lmer(log_ratio ~ 0+log_se * log(ref_HR)+(1|NCT), data = dif_OS_cle
 su=as.data.frame(summary(r_model_OS_se)$varcor)
 ICC_OS=(su[su$grp=="NCT", "sdcor"])**2/((su[su$grp=="NCT", "sdcor"])**2+(su[su$grp=="Residual", "sdcor"])**2)
 summ(r_model_OS_se,model.info=FALSE)
+fitted_vals <- fitted(r_model_OS_se)
+r2_manual <- cor(fitted_vals, dif_OS_clean$log_se)^2
+r2(r_model_OS_se)
 ```
-We did not obtain the same type of results for *OS*, but this endpoint also has a much smaller sample size (46v vs 191 data points for TBE) so it has a considerably larger standard error because of a smaller sample size and an increased residual variance. Also there were only few studies that had more than 1 sensitivity analysis for *OS* 
+
+We did not obtain the same type of results for *OS*, but this endpoint also has a much smaller sample size (46v vs 191 data points for TBE) so it has a considerably larger standard error because of a smaller sample size and an increased residual variance. Also there were only few studies that had more than 1 sensitivity analysis for *OS*
 
 ## Case studies
 
-Looking at the regression plots we can identify few outliers. In the case of *OS* there are few data points for which $\log(\frac{SE_{\scriptsize \mbox{Sensitivity}}}{SE_{\scriptsize \mbox{Primary}}})$ does not seem to change much, remaining between 0 and 0.2, but $\log(\frac{HR_{\scriptsize \mbox{Sensitivity}}}{HR_{\scriptsize \mbox{Primary}}})$ present large values.
-We identify these data point and listed the corresponding sensitivity analyses:
+Looking at the regression plots we can identify few outliers. In the case of *OS* there are few data points for which $\log(\frac{SE_{\scriptsize \mbox{Sensitivity}}}{SE_{\scriptsize \mbox{Primary}}})$ does not seem to change much, remaining between 0 and 0.2, but $\log(\frac{HR_{\scriptsize \mbox{Sensitivity}}}{HR_{\scriptsize \mbox{Primary}}})$ present large values. We identify these data point and listed the corresponding sensitivity analyses:
 
 ```{r, echo=FALSE}
 case_studies_OS=dif_OS_clean[(dif_OS_clean$log_se>0 & dif_OS_clean$log_se<0.3 & dif_OS_clean$log_ratio<(-0.1)), ]
@@ -926,38 +840,21 @@ case_studies_OS=dif_OS_clean[(dif_OS_clean$log_se>0 & dif_OS_clean$log_se<0.3 & 
 #table(case_studies_OS$Type.of.sensitivity.analysis)
 ```
 
-- NCT02409342 (3): The sensitivity analyses that stand out are the ones where, Sensitivity analysis of OS for NPT was based on the time interval during, which patients received NPT until the event or censoring time was discounted at 10%, 20%, and 30% for both arms to investigate how the OS results would have looked if the NPT was not available. 
--NCT03110562: The sensitivity analysis to stand out was using a switch-adjusted HR based on the two-stage estimation method (Latimer 2017, Latimer 2018).
--NCT03151811: Sensitivity analysis which run the analysis only for the target population
--NCT03391466: Rank preserving structural failure time model {Robins 1991} was used to adjust treatment drop in from standard of care to chimeric antigen receptor T-cell therapy.
--NCT03594747 (2): Two-stage method (Latimer et al 2014) was also performed to estimate the in-study crossover effect on the post-progression survival (PPS) using data from patients who progressed per IRC assessment before any subsequent anticancer therapy in the control arm only. 
-It counts 2 sensitivity analysis because this comparison is run both for A vs B and B vs C
--NCT03663205: Two-stage method (Latimer et al 2014) was also performed to estimate the in-study crossover effect on the post-progression survival (PPS) using data from patients who progressed per IRC assessment before any subsequent anticancer therapy in the control arm only.
--NCT03914612: The sensitivity analysis to stand out was a 2-stage model
-
+-   NCT02409342 (3): The sensitivity analyses that stand out are the ones where, Sensitivity analysis of OS for NPT was based on the time interval during, which patients received NPT until the event or censoring time was discounted at 10%, 20%, and 30% for both arms to investigate how the OS results would have looked if the NPT was not available. -NCT03110562: The sensitivity analysis to stand out was using a switch-adjusted HR based on the two-stage estimation method (Latimer 2017, Latimer 2018). -NCT03151811: Sensitivity analysis which run the analysis only for the target population -NCT03391466: Rank preserving structural failure time model {Robins 1991} was used to adjust treatment drop in from standard of care to chimeric antigen receptor T-cell therapy. -NCT03594747 (2): Two-stage method (Latimer et al 2014) was also performed to estimate the in-study crossover effect on the post-progression survival (PPS) using data from patients who progressed per IRC assessment before any subsequent anticancer therapy in the control arm only. It counts 2 sensitivity analysis because this comparison is run both for A vs B and B vs C -NCT03663205: Two-stage method (Latimer et al 2014) was also performed to estimate the in-study crossover effect on the post-progression survival (PPS) using data from patients who progressed per IRC assessment before any subsequent anticancer therapy in the control arm only. -NCT03914612: The sensitivity analysis to stand out was a 2-stage model
 
 *TBE* presented also few but less strong outliers, so we also listed those:
+
 ```{r, echo=FALSE}
 case_studies_TBE=dif_TBE_clean[dif_TBE_clean$log_ratio>0.35, ]
 #CS_TBE=unique(case_studies_TBE$NCT)
 
 #table(case_studies_TBE$Type.of.sensitivity.analysis)
 ```
--NCT00836654: The sensitivity analysis that stands out is the one that counted all censored events as PuFS events
--NCT03173248:The sensitivity analysis that stands out is a Log-rank test stratified by the IRT randomization stratification factors and based on the FAS
--NCT04008030:The analysis that stands out is by BICR in all 1L randomized patients, but it is not listed as sensitivity analysis but as a secondary endpoint
--NCT04322539: The analysis that stands out changes the censoring rules to include all the deaths observed during the study in the analysis irrespective of when they occurred.
-This is also the one that is further from the regression line (with log_HR >0.6 while the regression line at that point of log_se is slightly larger than 0)
 
+-NCT00836654: The sensitivity analysis that stands out is the one that counted all censored events as PuFS events -NCT03173248:The sensitivity analysis that stands out is a Log-rank test stratified by the IRT randomization stratification factors and based on the FAS -NCT04008030:The analysis that stands out is by BICR in all 1L randomized patients, but it is not listed as sensitivity analysis but as a secondary endpoint -NCT04322539: The analysis that stands out changes the censoring rules to include all the deaths observed during the study in the analysis irrespective of when they occurred. This is also the one that is further from the regression line (with log_HR \>0.6 while the regression line at that point of log_se is slightly larger than 0)
 
 ## Conclusions
 
-The 60 randomly selected studies that we analysed in this project gave us an idea on the use of sensitivity analyses in oncological RCTs. 
-Even if sensitivity analyses are a very useful practice, especially when dealing with tumour-based endpoints, which are more prone to subjectivity and bias, they are still not planned, nor reported for many studies. 
-The analyses that were reported employed mostly different censoring rules than those used in the primary analysis, and a lower number of them also focused on the different methods and assessment strategies. When comparing these sensitivity analyses with the primary, it was possible to see some effect of Hazard Ratios on the Standard errors. More specifically the analyses we run seemed to point at a relationship between the original value of HR for the primary analysis and a change in the standard errors of sensitivity analyses.
+The 60 randomly selected studies that we analysed in this project gave us an idea on the use of sensitivity analyses in oncological RCTs. Even if sensitivity analyses are a very useful practice, especially when dealing with tumour-based endpoints, which are more prone to subjectivity and bias, they are still not planned, nor reported for many studies. The analyses that were reported employed mostly different censoring rules than those used in the primary analysis, and a lower number of them also focused on the different methods and assessment strategies. When comparing these sensitivity analyses with the primary, it was possible to see some effect of Hazard Ratios on the Standard errors. More specifically the analyses we run seemed to point at a relationship between the original value of HR for the primary analysis and a change in the standard errors of sensitivity analyses.
 
 Further assessment on new samples of studies would be needed to confirm this hypothesis.
-
-
-
-
