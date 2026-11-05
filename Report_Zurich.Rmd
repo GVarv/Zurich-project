@@ -1,6 +1,7 @@
 ---
 title: "Zurich Report"
 bibliography: references.bib
+csl: american-medical-association.csl
 link-citations: true
 output:
   pdf_document:
@@ -22,49 +23,61 @@ library(jtools)
 options(kableExtra.html.bsTable = TRUE)
 ```
 
+## **Abstract**
+
+**Background:** Tumor-based endpoints are part of the main endpoint in oncological research, but their evaluation is based on a series of subjective choices, which include the rules used to censor patients and the timing at which tumor progression is recorded and are therefore more prone to bias than more objective endpoint such as Overall Survival (OS). Sensitivity analyses are used to evaluate the robustness of trial results for the different endpoints, but the inclusion of the type of sensitivity analysis is also a subjective choice. Our study aim at compare the results between primary and sensitivity analyses and identify possible pattern of choice.
+
+**Methods:** We extracted the numerical results for all the primary and sensitivity analyses reported in publicly available documents for each trials. We then used these results to compute the ratio of Hazard Ratios (HRs) and of Standard Errors between primary and sensitivity analyses and then analysed the relation of those to ratios to explore the relationship between primary and sensitivity analyses, also investigating the role that the different type of sensitivity analyses have in this relationship.
+
+**Results:**
+
 ## Introduction
 
-An essential part of oncological research is based on survival analysis, as one of the main goals is to reduce mortality in patients, as well as increase the time without disease progression[@wilson2015]. Overall survival (OS), defined as the time from randomisation to death, is seen as the gold standard in oncology clinical trials[@gormley2025], as it is easy to measure, since we usually have a precise time for death. It is also very objective, as death is a well-defined endpoint and its measurement cannot be biased by the researcher’s assessment. Moreover, the censoring rules, which are the set of scenarios that describe when a patient will be censored, employed in the analysis of OS tend to be simple and consistent among trials, reducing the possibility of bias. At the same time, OS requires very long follow-up periods and its usefulness is limited in the case of slow-progressing diseases with a long survival expectancy, as there is a high chance of intercurrent events or changes in treatment[@kilickap].
+An essential part of oncological research is based on survival analysis, as one of the main goals is to reduce mortality in patients, as well as increase the time without disease progression [@wilson2015]. Overall survival (OS), defined as the time from randomisation to death, is seen as the gold standard in oncology clinical trials [@gormley2025], as it is easy to measure, since we usually have a precise time for death. It is also very objective, as death is a well-defined endpoint and its measurement cannot be biased by the researcher’s assessment. Moreover, the censoring rules, which are the set of scenarios that describe when a patient will be censored, employed in the analysis of OS tend to be simple and consistent among trials, reducing the possibility of bias. At the same time, OS requires very long follow-up periods and its usefulness is limited in the case of slow-progressing diseases with a long survival expectancy, as there is a high chance of intercurrent events or changes in treatment [@kilickap].
 
-These are some of the reasons why surrogate endpoints based on tumour assessment are widely accepted, even if they are continuous endpoints measured by discreet[@wilson2015] assessmenta nd therefore rely on the timing of the investigation.[@wilson2015]
+These are some of the reasons why surrogate endpoints based on tumor assessment are widely accepted, even if they are continuous endpoints measured by discrete assessments nd therefore rely on the timing of the investigation [@wilson2015].
 
-The most common tumour-based endpoints (are:
+The most common tumor-based endpoints are:
 
 -   Progression-Free Survival (PFS), defined as the time from randomisation until the first evidence of disease progression or death[@progress2011].
 
--   Disease-Free Survival (DFS), defined as the time from randomisation until evidence of disease recurrence[@disease-2011].
+-   Disease-Free Survival (DFS), defined as the time from randomisation until evidence of disease recurrence [@disease-2011].
 
--   Event-Free Survival (EFS), defined as the time from randomisation to an event which may include disease progression, discontinuation of the treatment for any reason, or death[@event-fr2011].
+-   Event-Free Survival (EFS), defined as the time from randomisation to an event which may include disease progression, discontinuation of the treatment for any reason, or death [@event-fr2011].
 
--   Relapse-Free Survival (RFS), defined as the length of time after primary treatment that the patient survives without any signs or symptoms of that cancer[@relapse-].
+-   Relapse-Free Survival (RFS), defined as the length of time after primary treatment that the patient survives without any signs or symptoms of that cancer [@definiti2011].
 
-The choice of tumour-based endpoint depends on the type of tumour studied[@kilickap], but they are all subject to the possibility of bias[@wilson2015]. Therefore, their use is more controversial compared with OS, due to the subjectivity of tumour assessment. These endpoints also rely more on how different scenarios are accounted for as that can affect whether some and until which points some patients are included in the analyses. This means that they are more prone to obtaining different results depending on the type of primary analysis and censoring rules employed[@lesan2024], and, therefore, to bias.
+The choice of tumor-based endpoint depends on the type of tumor studied [@kilickap], but they are all subject to the possibility of bias [@wilson2015]. Therefore, their use is more controversial compared with OS, due to the subjectivity of tumor assessment. These endpoints also rely more on how different scenarios are accounted for as that can affect whether some and until which points some patients are included in the analyses. This means that they are more prone to obtaining different results depending on the type of primary analysis and censoring rules employed [@lesan2024], and, therefore, to bias.
 
 To evaluate how dependent the primary results are on methodological choices and assess their robustness and the potential impact of bias, sensitivity analyses are often employed. These analyses reassess study outcomes with varying methodologies, assumptions, and/or censoring rules. However, the choice of which primary and sensitivity analyses to include in the study remains a subjective one.
 
-Our main project aims to:
+This study is the exploratory part of a larger project to evaluate the reproducibility and robustness of the main oncological endpoints. Its main aims are to:
 
 1.  Assess the reproducibility of the main studies that supported European Medicine Agency (EMA) authorisations of indications for oncological drugs.
 
 2.  Evaluate the robustness of the selected studies’ conclusions using different censoring rules.
 
-3.  Analyse, when possible, the difference in results between the primary and the sensitivity analyses to identify possible trends in the choice of primary analyses In this report we focus on this last point of the project.
+3.  Analyse, when possible, the difference in results between the primary and the sensitivity analyses to identify possible trends in the choice of primary analyses.
+
+This study focused on this last point, making use of the publicly available results from a sample of oncological randomized controlled trials (RCTs) to investigate the differences between the results obtained in the primary analyses and the ones obtained from the sensitivity analyses, when available.
 
 ## Methods
 
-We identified all oncologic indications that received a positive opinion from the Committee for Medicinal Products for Human Use (CHMP) between January 01, 2020 and December 31, 2024. Using the European public assessment report (EPAR), we then identified 223 randomised controlled trials (RCTs) referred to as ‘main studies’.
+We identified all oncological indications that received a positive opinion from the Committee for Medicinal Products for Human Use (CHMP) between January 01, 2020 and December 31, 2024. Using the European public assessment reports (EPARs), we then identified 223 RCTs referred to as ‘main studies’.
 
-We used the results of an earlier audit of data sharing by pharmaceutical companies for oncology trials, to calculate the size of the sample needed for our study. This previous paper found that only 34% of trials that supported FDA approval between 2011 and 2021 had accessible IPD[@hopkins2023]. We used 34% as the expected proportion of reproducible trials and 12% as the half-width of the 95% CI and obtained 60 trials as required sample size for our study. Therefore we selected 60 RCTs using the sampling function \texttt{sample()} implemented in R, setting a seed for computational reproducibility.
+We used the results of an earlier audit of data sharing by pharmaceutical companies for oncology trials, to calculate the size of the sample needed for our study. This previous paper found that only 34% of trials that supported FDA approval between 2011 and 2021 had accessible IPD [@hopkins2023]. We used 34% as the expected proportion of reproducible trials and 12% as the half-width of the 95% CI and obtained 60 trials as required sample size for our study. Therefore we selected 60 RCTs using the sampling function \texttt{sample()} implemented in R, setting a seed for computational reproducibility.
 
-During the review of the documents of the selected trials, it was noticed that two of them did not report any analyses for neither OS nor any tumour based endpoint. They were removed from the sample and two more were randomly selected using the same function and seed but removing the already selected studies from the pool of selectable studies.
+During the review of the documents of the selected trials, it was noticed that two of them did not report any analyses for neither OS nor any tumor based endpoint. They were removed from the sample and two more were randomly selected using the same function and seed but removing the already selected studies from the pool of selectable studies.
 
-For each selected RCT, we have requested the relevant document to reanalyse the original results. We have also collected the publicly available information on the type of primary and sensitivity analyses conducted in each RCT through EPARs, journal articles and their supplementary materials, Protocols and SAPs; extracting their results in terms of Hazard Ratios (HRs) and confidence intervals (CIs) for OS and tumour-based endpoints, for each analysis in each RCT.
+For each selected RCT, we requested the relevant document to reanalyze the original results.
+
+At the same time we have also collected the publicly available information on the type of primary and sensitivity analyses conducted in each RCT through EPARs, journal articles and their supplementary materials, Protocols and SAPs; extracting their results in terms of Hazard Ratios (HRs) and confidence intervals (CIs) for OS and tumor-based endpoints, for each analysis in each RCT.
 
 ### Data extraction
 
-We created an [Excel file](https://uniren1-my.sharepoint.com/:x:/g/personal/giulia_varvara_univ-rennes_fr/EYIBktM27lhIvCf4wRn-030BDRcOL2O7wJAb2NL6Ws71Hw?e=XwaLyy) containing, for each RCT, information about the main time-to-event endpoint analysed, the type of primary and sensitivity analyses reported in any of the publicly available documents, the censoring rules employed and the values for HRs, lower and upper bounds of the Confidence Intervals, $p$-value and, when possible, the median survival time.
+We created an [spreadsheet](https://uniren1-my.sharepoint.com/:x:/g/personal/giulia_varvara_univ-rennes_fr/EYIBktM27lhIvCf4wRn-030BDRcOL2O7wJAb2NL6Ws71Hw?e=XwaLyy) containing, for each RCT, information about the main time-to-event endpoint analysed, the type of primary and sensitivity analyses reported in any of the publicly available documents, the censoring rules employed and the values for HRs, lower and upper bounds of the Confidence Intervals, $p$-value and, when possible, the median survival time.
 
-For simplification, all the different tumour-based endpoints, like Progression-Free Survival (PFS), Disease-Free Survival (DFS), Relapse-Free Survival (RFS) etc. were grouped under the label of Tumour-Based Endpoint (TBE) for the purpose of our analyses.
+For simplification, all the different tumor-based endpoints such as Progression-Free Survival (PFS), Disease-Free Survival (DFS), Relapse-Free Survival (RFS) etc. were grouped under the label of Tumor-Based Endpoint (TBE) in our analyses. Then we proceeded to use the extracted information to compare the results from the primary analyses with the ones obtained in the sensitivity analyses in each RCT.
 
 ```{r Read data and split into trials, echo=FALSE, warning=FALSE, include=FALSE}
 #install.packages("readxl")
@@ -91,11 +104,9 @@ split_df_grouped <- data %>%
   group_split()
 ```
 
-Moreover, sensitivity analyses were divided into three categories according to the type of sensitivity analysis. Sensitivity analyses were categorised as "Censoring rules" when the main difference with the primary analysis was the set of censoring rules defining in which situations patients should be censored and how their data should be included in the analysis. They were defined as changes in "Population" when the sensitivity analysis was focusing on a different population or a subset of the primary analysis's population.
+Sensitivity analyses were then divided into three categories according to the type of sensitivity analysis. Sensitivity analyses were categorised as relative to "Censoring rules" when the main difference with the primary analysis was the set of rules defining in which situations patients should be censored and how their data should be included in the analysis. They were defined as changes in "Population" when the sensitivity analysis was focusing on a different population or a subset of the primary analysis's population. Finally, they were classified as differing in "Methods" when different types of analysis, stratification or evaluation of tumor growth were employed.
 
-Finally, they were classified as differing in "Methods" when different types of analysis, stratification or evaluation of tumour growth were employed.
-
-The number of sensitivity analyses per category for each point is reported in the following table, from which it is also possible to see that some sensitivity analyses fell under more than one category.
+The number of sensitivity analyses per category for each point is reported in the \@ref(tab:Table categories), from which it is also possible to see the same sensitivity analyses fell under more than one category.
 
 ```{r Compute ratios, warning=FALSE, include=FALSE}
 med_sens_OS=c()
@@ -300,7 +311,7 @@ dif_OS_clean$Population <- factor(dif_OS_clean$Population,
                                   labels = c("No", "Yes"))
 ```
 
-```{r Table categories, echo=FALSE}
+```{r Table categories,tab.cap="Type of sensitivity analysis per endpoint", echo=FALSE}
 tTBE=table(dif_TBE_clean$Type.of.sensitivity.analysis)
 tOS=table(dif_OS_clean$Type.of.sensitivity.analysis)
 t_tot=as.data.frame(bind_rows(tTBE, tOS))
@@ -309,9 +320,60 @@ rownames(t_tot)=c("TBE", "OS")
 kable(t_tot)
 ```
 
-Also, the same study could have multiple sensitivity analyses, and those could belong to different categories. The following figure shows how many studies have sensitivity analysis across how many different categories.
+A sensitivity analysis could fall into multiple categories at the same time if it presents difference with the primary analysis in more than one point. For example, the sensitivity analysis of an RCT could change the evaluation method from an Independent Review Committee (IRC) to an Investigator based one, but at the same time focus on the Per-Protocol population instead of the population that the primary analysis was focused on; in this case the sensitivity analysis would be classified as both "Methods" and "Population" based.
 
-```{r Different categories in same study, echo=FALSE, warning=FALSE}
+We used these data collected from the public records to create forest plots of the results for each RCT, which are available in the [appendix](https://github.com/GVarv/Zurich-project/blob/main/combined_forestplots.pdf).
+
+Then we proceeded to use the extracted information to compare the results from the primary analyses with the ones obtained in the sensitivity analyses in each RCT.
+
+All the files and code used for this project are available on [GitHub](https://github.com/GVarv/Zurich-project)
+
+### Analysis comparison per trial
+
+To identify whether there was any pattern in the choice of primary or sensitivity analysis, we compared the results from each of the reported analyzes retrieving the standard errors of each HR using the \texttt{ci2se} function from the \texttt{biostatUZH} R package and then computed the ratio between the standard errors of the sensitivity analyzes and the one of the primary analyzes. Similarly, we computed the logarithm of the ratio of the HR of the sensitivity analysis over the HR of the primary analysis.
+
+We then examined the distribution of these quantities for each endpoint and, to examine the possibility of a relation between the comparison of HRs and standard error between sensitivity and primary analyzes, we plotted the ratio of the standard errors computed before against the logarithm of the ratio of HRs.
+
+As a first step, we modeled the relation between these values for each endpoint using a linear model that only included HR as regression variable; then, since the scatter plot suggested the presence of two different trends, we explore the possibility of different distributions using finite mixture models.
+
+Afterwards, we tested whether the category of sensitivity analysis that we selected beforehand could influence the model results. So, we added the different categories as a fixed variable in the model. Since some sensitivity analyzes fell under multiple categories at once, we created 3 dummy variables to indicate the presence or absence of change in each category.
+
+Finally, we expanded the previous models to account for the presence of clustering, as in the dataset, multiple data points come from the same RCT, using a mixed model and compared the results of these different analyzes.
+
+## Results
+
+### Sensitivity analysis frequency
+
+The frequency of the number of sensitivity analyses per endpoint. is illustrated by Fig. \@ref(fig:Frequency plot). This plot only includes the analyses that reported numerical values , but, among the sensitivity analyses described in the public documents we examined, 14 analyses coming from 10 RCTs were described but did not have any results described.
+
+```{r Frequency plot,fig.cap="Number of sensitivty analyses per endpoint", echo=FALSE}
+library(ggplot2)
+
+# Combine into a data frame with a group label
+df <- data.frame(
+  value = c(med_sens_OS, med_sens_TBE),
+  group = factor(c(rep("OS", length(med_sens_OS)), rep("TBE", length(med_sens_TBE))))
+)
+
+ggplot(df, aes(x = value, fill = group)) +
+  geom_bar(
+    position = position_dodge(width = 0.9, preserve = "single"),
+    color = "black",
+    alpha = 0.9
+  ) +
+  scale_fill_manual(values = c("OS" = "dodgerblue", "TBE" = "seagreen3")) +
+  scale_x_continuous(breaks = seq(0, 15, by = 1)) +
+  labs(#title = "Frequency of sensitivity analyses per study in OS and TBE",
+       x = "Number of sensitivity analyses", 
+       y = "Frequency") +
+  theme_minimal()
+```
+
+It is worth noticing that the number of studies that do not report any sensitivity analysis at all is quite high for both endpoints. 40 studies did not report any sensitivity analysis for OS and 19 did not report any sensitivity analyses for TBE. The fact that $\frac{2}{3}$ of studies did not have any sensitivity analyses for OS is not surprising, as that is considered a more stable and objective endpoint. We then looked at these sensitivity analyses were distributed among the different categories.
+
+The same study could also have multiple sensitivity analyses, which could belong to the same or to different categories. Fig. \@ref(fig:Different categories in same study) shows number of trials for which different categories of sensitivity analyses have been reported in the publicly available documents.
+
+```{r Different categories in same study,fig.cap="Different categories of sensitivity analyses for the same study", echo=FALSE, warning=FALSE}
 # Summary: count of distinct categories per NCT
 category_summary_TBE <- dif_TBE_clean %>%
   group_by(NCT) %>%
@@ -358,60 +420,9 @@ ggplot(f_long, aes(x = Category, y = Count, fill = Endpoint)) +
   theme(axis.text.x = element_text(angle = 0, hjust = 1))
 ```
 
-For example, the sensitivity analysis of an RCT could change the evaluation method from an Independent Review Committee (IRC) to an Investigator based one, but at the same time focus on the Per-Protocol population instead of the population that the primary analysis was focused on; in this case the sensitivity analysis would be classified as both "Methods" and "Population" based.
+We then plotted the frequency of those categories of sensitivity analyses for each endpoint (Fig. \@ref(fig:Frequency percentage)).
 
-We used these data collected from the public records to create forest plots of the results for each RCT, and we combined them in an external pdf.
-
-To have a better idea of the amount of sensitivity analysis used per RCT, we plotted their frequency per endpoint. For simplification, all the different tumour-based endpoints such as Progression-Free Survival (PFS), Disease-Free Survival (DFS), Relapse-Free Survival (RFS) etc. were grouped under the label of Tumour-Based Endpoint (TBE) in our analyses. Then we proceeded to use the extracted information to compare the results from the primary analyses with the ones obtained in the sensitivity analyses in each RCT.
-
-All the files and code used for this project are available on [GitHub](https://github.com/GVarv/Zurich-project)
-
-### Analysis comparison per trial
-
-To identify whether there was any pattern in the choice of primary or sensitivity analysis, we compared the results from each of the reported analyzes retrieving the standard errors of each HR using the \texttt{ci2se} function from the \texttt{biostatUZH} R package and then computed the ratio between the standard errors of the sensitivity analyzes and the one of the primary analyzes. Similarly, we computed the logarithm of the ratio of the HR of the sensitivity analysis over the HR of the primary analysis.
-
-We then examined the distribution of these quantities for each endpoint and, to examine the possibility of a relation between the comparison of HRs and standard error between sensitivity and primary analyzes, we plotted the ratio of the standard errors computed before against the logarithm of the ratio of HRs.
-
-As a first step, we modeled the relation between these values for each endpoint using a linear model that only included HR as regression variable; then, since the scatter plot suggested the presence of two different trends, we explore the possibility of different distributions using finite mixture models.
-
-Afterwards, we tested whether the category of sensitivity analysis that we selected beforehand could influence the model results. So, we added the different categories as a fixed variable in the model. Since some sensitivity analyzes fell under multiple categories at once, we created 3 dummy variables to indicate the presence or absence of change in each category.
-
-Finally, we expanded the previous models to account for the presence of clustering, as in the dataset, multiple data points come from the same RCT, using a mixed model and compared the results of these different analyzes.
-
-## Results
-
-### Sensitivity analysis frequency
-
-The following figure illustrates the frequency of the number of sensitivity analyses per endpoint.
-
-It includes only the analyses that reported numerical values , but, among the analyses described in the public documents we examined, 14 analyses coming from 10 RCTs were described but did not have any results described.
-
-```{r Frequency plot, echo=FALSE}
-library(ggplot2)
-
-# Combine into a data frame with a group label
-df <- data.frame(
-  value = c(med_sens_OS, med_sens_TBE),
-  group = factor(c(rep("OS", length(med_sens_OS)), rep("TBE", length(med_sens_TBE))))
-)
-
-ggplot(df, aes(x = value, fill = group)) +
-  geom_bar(
-    position = position_dodge(width = 0.9, preserve = "single"),
-    color = "black",
-    alpha = 0.9
-  ) +
-  scale_fill_manual(values = c("OS" = "dodgerblue", "TBE" = "seagreen3")) +
-  scale_x_continuous(breaks = seq(0, 15, by = 1)) +
-  labs(#title = "Frequency of sensitivity analyses per study in OS and TBE",
-       x = "Number of sensitivity analyses", 
-       y = "Frequency") +
-  theme_minimal()
-```
-
-It is worth noticing that the number of studies that do not report any sensitivity analysis at all is quite high for both endpoints. 40 studies did not report any sensitivity analysis for OS and 19 did not report any sensitivity analyses for TBE. The fact that $\frac{2}{3}$ of studies did not have any sensitivity analyses for OS is not surprising, as that is considered a more stable and objective endpoint. We then looked at these sensitivity analyses were distributed among the different categories and the results are shown in the next figure.
-
-```{r Frequency percentage, echo=FALSE}
+```{r Frequency percentage,fig.cap="Frequency of senistivity analyses category per endpoint",echo=FALSE}
 freq_OS=as.data.frame(table(dif_OS_clean$Type.of.sensitivity.analysis))
 freq_TBE=as.data.frame(table(dif_TBE_clean$Type.of.sensitivity.analysis))
 
