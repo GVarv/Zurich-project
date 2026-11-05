@@ -31,6 +31,8 @@ options(kableExtra.html.bsTable = TRUE)
 
 **Results:**
 
+**Conclusions:**
+
 ## Introduction
 
 An essential part of oncological research is based on survival analysis, as one of the main goals is to reduce mortality in patients, as well as increase the time without disease progression [@wilson2015]. Overall survival (OS), defined as the time from randomisation to death, is seen as the gold standard in oncology clinical trials [@gormley2025], as it is easy to measure, since we usually have a precise time for death. It is also very objective, as death is a well-defined endpoint and its measurement cannot be biased by the researcher’s assessment. Moreover, the censoring rules, which are the set of scenarios that describe when a patient will be censored, employed in the analysis of OS tend to be simple and consistent among trials, reducing the possibility of bias. At the same time, OS requires very long follow-up periods and its usefulness is limited in the case of slow-progressing diseases with a long survival expectancy, as there is a high chance of intercurrent events or changes in treatment [@kilickap].
