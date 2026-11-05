@@ -1,19 +1,23 @@
 ---
-title: "Zurich Report"
+title: "A meta-study of sensitivity analyses with survival
+outcomes in oncology"
 bibliography: references.bib
 csl: american-medical-association.csl
 link-citations: true
 output:
-  pdf_document:
+  bookdown::pdf_document2:
+    toc: false
+    number_sections: false
     keep_tex: true
 header-includes:
   - \usepackage{booktabs}
   - \usepackage{lmodern}
-date: "2026-03-20"
+  - \usepackage{float}
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(dev = "cairo_pdf")
+knitr::opts_chunk$set(fig.pos = "H", out.extra = "")
 #install.packages("tinytex")
 #tinytex::install_tinytex()
 
@@ -30,8 +34,6 @@ options(kableExtra.html.bsTable = TRUE)
 **Methods:** We extracted the numerical results for all the primary and sensitivity analyses reported in publicly available documents for each trials. We then used these results to compute the ratio of Hazard Ratios (HRs) and of Standard Errors between primary and sensitivity analyses and then analysed the relation of those to ratios to explore the relationship between primary and sensitivity analyses, also investigating the role that the different type of sensitivity analyses have in this relationship.
 
 **Results:**
-
-**Conclusions:**
 
 ## Introduction
 
@@ -108,7 +110,7 @@ split_df_grouped <- data %>%
 
 Sensitivity analyses were then divided into three categories according to the type of sensitivity analysis. Sensitivity analyses were categorised as relative to "Censoring rules" when the main difference with the primary analysis was the set of rules defining in which situations patients should be censored and how their data should be included in the analysis. They were defined as changes in "Population" when the sensitivity analysis was focusing on a different population or a subset of the primary analysis's population. Finally, they were classified as differing in "Methods" when different types of analysis, stratification or evaluation of tumor growth were employed.
 
-The number of sensitivity analyses per category for each point is reported in the \@ref(tab:Table categories), from which it is also possible to see the same sensitivity analyses fell under more than one category.
+The number of sensitivity analyses per category for each point is reported in *Table* \@ref(tab:Table-categories), from which it is also possible to see the same sensitivity analyses fell under more than one category.
 
 ```{r Compute ratios, warning=FALSE, include=FALSE}
 med_sens_OS=c()
@@ -313,13 +315,13 @@ dif_OS_clean$Population <- factor(dif_OS_clean$Population,
                                   labels = c("No", "Yes"))
 ```
 
-```{r Table categories,tab.cap="Type of sensitivity analysis per endpoint", echo=FALSE}
+```{r Table-categories,tab.cap="Type of sensitivity analysis per endpoint", echo=FALSE}
 tTBE=table(dif_TBE_clean$Type.of.sensitivity.analysis)
 tOS=table(dif_OS_clean$Type.of.sensitivity.analysis)
 t_tot=as.data.frame(bind_rows(tTBE, tOS))
 t_tot[is.na(t_tot)]=0
 rownames(t_tot)=c("TBE", "OS")
-kable(t_tot)
+knitr::kable(t_tot, caption = "Type of sensitivity analysis per endpoint", position = "H")
 ```
 
 A sensitivity analysis could fall into multiple categories at the same time if it presents difference with the primary analysis in more than one point. For example, the sensitivity analysis of an RCT could change the evaluation method from an Independent Review Committee (IRC) to an Investigator based one, but at the same time focus on the Per-Protocol population instead of the population that the primary analysis was focused on; in this case the sensitivity analysis would be classified as both "Methods" and "Population" based.
@@ -346,9 +348,9 @@ Finally, we expanded the previous models to account for the presence of clusteri
 
 ### Sensitivity analysis frequency
 
-The frequency of the number of sensitivity analyses per endpoint. is illustrated by Fig. \@ref(fig:Frequency plot). This plot only includes the analyses that reported numerical values , but, among the sensitivity analyses described in the public documents we examined, 14 analyses coming from 10 RCTs were described but did not have any results described.
+The frequency of the number of sensitivity analyses per endpoint. is illustrated by Fig. \@ref(fig:Frequency-plot). This plot only includes the analyses that reported numerical values , but, among the sensitivity analyses described in the public documents we examined, 14 analyses coming from 10 RCTs were described but did not have any results described.
 
-```{r Frequency plot,fig.cap="Number of sensitivty analyses per endpoint", echo=FALSE}
+```{r Frequency-plot,fig.cap="Number of sensitivty analyses per endpoint", echo=FALSE}
 library(ggplot2)
 
 # Combine into a data frame with a group label
@@ -373,9 +375,9 @@ ggplot(df, aes(x = value, fill = group)) +
 
 It is worth noticing that the number of studies that do not report any sensitivity analysis at all is quite high for both endpoints. 40 studies did not report any sensitivity analysis for OS and 19 did not report any sensitivity analyses for TBE. The fact that $\frac{2}{3}$ of studies did not have any sensitivity analyses for OS is not surprising, as that is considered a more stable and objective endpoint. We then looked at these sensitivity analyses were distributed among the different categories.
 
-The same study could also have multiple sensitivity analyses, which could belong to the same or to different categories. Fig. \@ref(fig:Different categories in same study) shows number of trials for which different categories of sensitivity analyses have been reported in the publicly available documents.
+The same study could also have multiple sensitivity analyses, which could belong to the same or to different categories. Fig. \@ref(fig:Different-categories) shows number of trials for which different categories of sensitivity analyses have been reported in the publicly available documents.
 
-```{r Different categories in same study,fig.cap="Different categories of sensitivity analyses for the same study", echo=FALSE, warning=FALSE}
+```{r Different-categories,fig.cap="Different categories of sensitivity analyses for the same study", echo=FALSE, warning=FALSE}
 # Summary: count of distinct categories per NCT
 category_summary_TBE <- dif_TBE_clean %>%
   group_by(NCT) %>%
@@ -422,9 +424,9 @@ ggplot(f_long, aes(x = Category, y = Count, fill = Endpoint)) +
   theme(axis.text.x = element_text(angle = 0, hjust = 1))
 ```
 
-We then plotted the frequency of those categories of sensitivity analyses for each endpoint (Fig. \@ref(fig:Frequency percentage)).
+We then plotted the frequency of those categories of sensitivity analyses for each endpoint (Fig. \@ref(fig:Frequency-percentage)).
 
-```{r Frequency percentage,fig.cap="Frequency of senistivity analyses category per endpoint",echo=FALSE}
+```{r Frequency-percentage,fig.cap="Frequency of senistivity analyses category per endpoint",echo=FALSE}
 freq_OS=as.data.frame(table(dif_OS_clean$Type.of.sensitivity.analysis))
 freq_TBE=as.data.frame(table(dif_TBE_clean$Type.of.sensitivity.analysis))
 
