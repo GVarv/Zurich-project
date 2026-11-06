@@ -22,11 +22,6 @@ split_df_grouped <- data %>%
   group_split()
 
 
-
-
-
-
-
 #Create a forest plot with all the sensitivity anlyses for each study
 
 library(forestplot)

@@ -338,11 +338,11 @@ To identify whether there was any pattern in the choice of primary or sensitivit
 
 We then examined the distribution of these quantities for each endpoint and, to examine the possibility of a relation between the comparison of HRs and standard error between sensitivity and primary analyzes, we plotted the ratio of the standard errors computed before against the logarithm of the ratio of HRs.
 
-As a first step, we modeled the relation between these values for each endpoint using a linear model that only included HR as regression variable; then, since the scatter plot suggested the presence of two different trends, we explore the possibility of different distributions using finite mixture models.
+We then modeled the relation between these values for each endpoint using a linear model that only included HR as regression variable as first step; then, since the scatter plot suggested the presence of two different trends, we explore the possibility of different distributions using finite mixture models.
 
-Afterwards, we tested whether the category of sensitivity analysis that we selected beforehand could influence the model results. So, we added the different categories as a fixed variable in the model. Since some sensitivity analyzes fell under multiple categories at once, we created 3 dummy variables to indicate the presence or absence of change in each category.
+Afterwards, we tested whether the category in which the sensitivity analysis were catagorized beforehand could influence the model results. We added the different categories as a fixed variable in the model. To account for the fact that some sensitivity analyses fell under multiple categories at once, we created 3 dummy variables to indicate the presence or absence of change in each category.
 
-Finally, we expanded the previous models to account for the presence of clustering, as in the dataset, multiple data points come from the same RCT, using a mixed model and compared the results of these different analyzes.
+Finally, we expanded the previous models to account for the presence of clustering, as in the dataset, multiple data points come from the same RCT, using a mixed model and compared the results of these different analyses.
 
 ## Results
 
@@ -367,6 +367,7 @@ ggplot(df, aes(x = value, fill = group)) +
   ) +
   scale_fill_manual(values = c("OS" = "dodgerblue", "TBE" = "seagreen3")) +
   scale_x_continuous(breaks = seq(0, 15, by = 1)) +
+  scale_y_continuous(breaks = seq(0, 35, by = 5)) +
   labs(#title = "Frequency of sensitivity analyses per study in OS and TBE",
        x = "Number of sensitivity analyses", 
        y = "Frequency") +
@@ -375,185 +376,131 @@ ggplot(df, aes(x = value, fill = group)) +
 
 It is worth noticing that the number of studies that do not report any sensitivity analysis at all is quite high for both endpoints. 40 studies did not report any sensitivity analysis for OS and 19 did not report any sensitivity analyses for TBE. The fact that $\frac{2}{3}$ of studies did not have any sensitivity analyses for OS is not surprising, as that is considered a more stable and objective endpoint. We then looked at these sensitivity analyses were distributed among the different categories.
 
-The same study could also have multiple sensitivity analyses, which could belong to the same or to different categories. Fig. \@ref(fig:Different-categories) shows number of trials for which different categories of sensitivity analyses have been reported in the publicly available documents.
+The same study could also have multiple sensitivity analyses, which could belong to the same or to different categories. Fig. \@ref(fig:Sensitivity-categories)A shows the number of trials for which different categories of sensitivity analyses, while \@ref(fig:Sensitivity-categories)B illustrates the amount of sensitivity analysis per category across all trials that have been reported in the publicly available documents.
 
-```{r Different-categories,fig.cap="Different categories of sensitivity analyses for the same study", echo=FALSE, warning=FALSE}
-# Summary: count of distinct categories per NCT
+```{r Sensitivity-categories, fig.cap="Sensitivity analyses by endpoint. (A) Number of different sensitivity analysis categories within the same study. (B) Frequency of each sensitivity analysis category per endpoint.", echo=FALSE, warning=FALSE, fig.width=12, fig.height=5}
+library(patchwork)
+
+## ---------- Panel A ----------
 category_summary_TBE <- dif_TBE_clean %>%
   group_by(NCT) %>%
-  summarise(
-    n_categories = n_distinct(Type.of.sensitivity.analysis),
-    #categories = paste(sort(unique(Type.of.sensitivity.analysis)), collapse = " + ")
-  ) %>%
+  summarise(n_categories = n_distinct(Type.of.sensitivity.analysis)) %>%
   arrange(desc(n_categories))
 
 category_summary_OS <- dif_OS_clean %>%
   group_by(NCT) %>%
-  summarise(
-    n_categories = n_distinct(Type.of.sensitivity.analysis),
-    #categories = paste(sort(unique(Type.of.sensitivity.analysis)), collapse = " + ")
-  ) %>%
+  summarise(n_categories = n_distinct(Type.of.sensitivity.analysis)) %>%
   arrange(desc(n_categories))
 
+freq_TBE_A <- as.data.frame(table(category_summary_TBE$n_categories))
+freq_OS_A  <- as.data.frame(table(category_summary_OS$n_categories))
 
-freq_TBE=as.data.frame(table(category_summary_TBE$n_categories))
-freq_OS=as.data.frame(table(category_summary_OS$n_categories))
+freq_join_A <- merge(freq_OS_A, freq_TBE_A, by = "Var1", all = TRUE)
+freq_join_A[is.na(freq_join_A)] <- 0
+colnames(freq_join_A) <- c("Category", "OS", "TBE")
 
-freq_join <- merge(freq_OS, freq_TBE, by = "Var1", all = TRUE)
-freq_join[is.na(freq_join)]=0
-colnames(freq_join)=c("Category", "OS", "TBE")
+f_long_A <- freq_join_A %>%
+  pivot_longer(cols = c(OS, TBE), names_to = "Endpoint", values_to = "Count")
 
-f_long <- freq_join %>%
-  pivot_longer(
-    cols = c(OS, TBE),
-    names_to = "Endpoint",
-    values_to = "Count"
-  )
-
-# grouped bar plot
-ggplot(f_long, aes(x = Category, y = Count, fill = Endpoint)) +
-  geom_col(position = position_dodge(width = 0.65),
-    width = 0.65,  # space between bars, 
-    color = "black") +
+p_A <- ggplot(f_long_A, aes(x = Category, y = Count, fill = Endpoint)) +
+  geom_col(position = position_dodge(width = 0.65), width = 0.65, color = "black") +
   scale_y_continuous(breaks = seq(0, 20, by = 2)) +
+  scale_fill_manual(values = c("OS" = "dodgerblue", "TBE" = "seagreen3")) +
+  labs(x = "Number of sensitivity analysis categories in the same study",
+       y = "Number of studies") +
+
   theme_minimal() +
-  scale_fill_manual(values = c("OS" = "dodgerblue", "TBE" = "seagreen3"))+
-  labs(#title = "Number of category of sensitivity analysis in the same study",
-       x = "Number of sensitivity analysis categories in the same study",y = "Number of studies") +
-  #labs(x = "Category",y = "Frequency (%)") +
   theme(axis.text.x = element_text(angle = 0, hjust = 1))
-```
 
-We then plotted the frequency of those categories of sensitivity analyses for each endpoint (Fig. \@ref(fig:Frequency-percentage)).
+## ---------- Panel B ----------
+freq_OS_B  <- as.data.frame(table(dif_OS_clean$Type.of.sensitivity.analysis))
+freq_TBE_B <- as.data.frame(table(dif_TBE_clean$Type.of.sensitivity.analysis))
 
-```{r Frequency-percentage,fig.cap="Frequency of senistivity analyses category per endpoint",echo=FALSE}
-freq_OS=as.data.frame(table(dif_OS_clean$Type.of.sensitivity.analysis))
-freq_TBE=as.data.frame(table(dif_TBE_clean$Type.of.sensitivity.analysis))
+freq_join_B <- merge(freq_OS_B, freq_TBE_B, by = "Var1", all = TRUE)
+freq_join_B[is.na(freq_join_B)] <- 0
+colnames(freq_join_B) <- c("Category", "OS", "TBE")
 
-freq_join <- merge(freq_OS, freq_TBE, by = "Var1", all = TRUE)
-freq_join[is.na(freq_join)]=0
-colnames(freq_join)=c("Category", "OS", "TBE")
+rel_freq <- freq_join_B
+rel_freq[, "TBE"] <- (rel_freq[, "TBE"] / sum(rel_freq["TBE"])) * 100
+rel_freq[, "OS"]  <- (rel_freq[, "OS"]  / sum(rel_freq["OS"]))  * 100
 
-rel_freq=freq_join
-rel_freq[,"TBE"]=(rel_freq[,"TBE"]/sum(rel_freq["TBE"]))*100
-rel_freq[,"OS"]=(rel_freq[,"OS"]/sum(rel_freq["OS"]))*100
+f_long_B <- rel_freq %>%
+  pivot_longer(cols = c(OS, TBE), names_to = "Endpoint", values_to = "Count")
 
-f_long_rel <- rel_freq %>%
-  pivot_longer(
-    cols = c(OS, TBE),
-    names_to = "Endpoint",
-    values_to = "Count"
-  )
-
-# grouped bar plot
-ggplot(f_long_rel, aes(x = Category, y = Count, fill = Endpoint)) +
-  geom_col(
-    position = position_dodge(width = 0.55),
-    width=0.55, # space between bars, 
-    color = "black") +
+p_B <- ggplot(f_long_B, aes(x = Category, y = Count, fill = Endpoint)) +
+  geom_col(position = position_dodge(width = 0.55), width = 0.55, color = "black") +
   scale_y_continuous(breaks = seq(0, 100, by = 10)) +
+  scale_fill_manual(values = c("OS" = "dodgerblue", "TBE" = "seagreen3")) +
+  labs(x = "Category", y = "Frequency (%)") +
   theme_minimal() +
-  scale_fill_manual(values = c("OS" = "dodgerblue", "TBE" = "seagreen3"))+
-  labs(x = "Category",y = "Frequency (%)") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+## ---------- Combine ----------
+(p_A | p_B) +
+  plot_layout(guides = "collect") +
+  plot_annotation(tag_levels = "A") &
+  theme(plot.tag = element_text(face = "bold", size = 22),
+        legend.position = "bottom")
 ```
 
-From this histograms, we can see that, while the sensitivity analyses for TBE mostly focused on different censoring rules and slightly less on methods, for OS, the focus of the sensitivity analyses was almost entirely on different methods. In the case of TBE, it is worth keeping in mind that different methods also include changes in the way the disease progression is assessed between investigator-based and Independent Central Review (ICR)-based.
+From this histograms, we can see that most trials (14/17) for OS focus only on one type of category of sensitivity analysis at a time. For TBE it's more common to more different type of analyses, most trials still have only one (16/45) or two (18/45) categories. A deeper look at the category distribution in the different endpoint (Fig. \@ref(fig:Sensitivity-categories)B) shows that, while the sensitivity analyses for TBE mostly focused on different censoring rules (50.78%) and on methods (36.13%), for OS, the focus of the sensitivity analyses was almost entirely on different methods (80.43%), with only 10.87% focusing on censoring and 8.7% focusing on different populations. In the case of TBE, it is worth keeping in mind that different methods also include changes in the way the disease progression is assessed between investigator-based and Independent Central Review (ICR)-based.
 
 ### Hazard ratio and standard error comparison
 
-We then focused on examining the possibility of a pattern in the choice of primary and sensitivity analysis. To do so, we compared the logarithm of HRs and the one of the Standard Errors reported in each trial.
+We then focused on examining the possibility of a pattern in the choice of primary and sensitivity analysis. To do so, we compared the logarithm of HRs and the one of the Standard Errors reported in each tria.
 
-We drew the following boxplot of $\log(\frac{HR_{\scriptsize \mbox{Sensitivity}}}{HR_{\scriptsize \mbox{Primary}}})$ for both OS and the different types of TBE, to see how the differences between primary and sensitivity analyses were distributed
+Fig. \@ref(fig:Differences-HR-SE)A shows the distribution of $\log(\frac{HR_{\scriptsize \mbox{Sensitivity}}}{HR_{\scriptsize \mbox{Primary}}})$ while Fig. \@ref(fig:Differences-HR-SE)B illustreate the distribution of $\log(\frac{SE_{Sensitivity}}{SE_{Primary}})$.
 
-```{r Differences in HR, warning=FALSE, echo=FALSE}
+```{r Differences-HR-SE, fig.cap="Differences between primary and sensitivity analyses by endpoint. (A) Logarithm of the ratio of hazard ratios. (B) Logarithm of the ratio of standard errors. The dashed red line indicates no difference.", echo=FALSE, warning=FALSE, fig.width=10, fig.height=5}
+library(patchwork)
 
-df <- data.frame(
-  endpoint = rep(c("OS", "TBE"), c(length(dif_OS_clean$log_ratio), length(dif_TBE_clean$log_ratio))),
+## ---------- Panel A: HR ----------
+df_HR <- data.frame(
+  endpoint  = rep(c("OS", "TBE"), c(length(dif_OS_clean$log_ratio), length(dif_TBE_clean$log_ratio))),
   log_ratio = c(dif_OS_clean$log_ratio, dif_TBE_clean$log_ratio)
 )
 
-# Plot with default ggplot theme
-ggplot(df, aes(x = endpoint, y = log_ratio, fill = endpoint)) +
+p_A <- ggplot(df_HR, aes(x = endpoint, y = log_ratio, fill = endpoint)) +
   geom_boxplot() +
-   scale_fill_manual(
-    name = "endpoint", 
-    values = c("OS" = "dodgerblue", "TBE" = "seagreen3"),
-  )+
-  geom_hline(yintercept = 0, colour="firebrick", lwd=0.7, lty=2)+
-  #ggtitle("Logarithm of the difference in HR between primary and sensitivity analyses") +
-  scale_y_continuous(breaks = seq(0, 1, by = 0.2))+
-  ylab("") + 
-  xlab("") +
-  theme(
-    legend.position = "top",             # similar to "topleft"
-    legend.title = element_text(face = "bold"),
-    legend.text = element_text(size = 10)
-  )
-```
+  scale_fill_manual(name = "endpoint",
+                    values = c("OS" = "dodgerblue", "TBE" = "seagreen3")) +
+  geom_hline(yintercept = 0, colour = "firebrick", lwd = 0.7, lty = 2) +
+  scale_y_continuous(breaks = seq(0, 1, by = 0.2)) +
+  ylab("") +
+  xlab("")+
+  ggtitle("Log ratio of hazard ratios") 
 
-From this boxplot it is possible to see that, while the ratio of HRs in TBE concentrate around 0 with narrow quartiles, there are more outliers than in OS, whose median is slightly below 0 and has wider quartiles, but no outliers. The distributions for TBE and OS were the following:
-
-**TBE**
-
-```{r}
-summary(dif_TBE_clean$log_ratio)
-```
-
-**OS**
-
-```{r}
-summary(dif_OS_clean$log_ratio)
-```
-
-We did the same for the distribution of the standard errors comparison.
-
-```{r Differences in Se, warning=FALSE, echo=FALSE}
-
-df <- data.frame(
+## ---------- Panel B: SE ----------
+df_SE <- data.frame(
   endpoint = rep(c("OS", "TBE"), c(length(dif_OS_clean$log_se), length(dif_TBE_clean$log_se))),
-  SE = c(dif_OS_clean$log_se, dif_TBE_clean$log_se)
+  SE       = c(dif_OS_clean$log_se, dif_TBE_clean$log_se)
 )
 
-# Plot with default ggplot theme
-ggplot(df, aes(x = endpoint, y = SE, fill = endpoint)) +
+p_B <- ggplot(df_SE, aes(x = endpoint, y = SE, fill = endpoint)) +
   geom_boxplot() +
-  scale_fill_manual(
-    name = "endpoint", 
-    values = c("OS" = "dodgerblue", "TBE" = "seagreen3"),
-  ) +
-  geom_hline(yintercept = 0, colour="firebrick",lwd=0.7, lty=2)+
-  #ggtitle("Ratio of Standard errors between primary and sensitivity analyses") +
-  ylab("") + 
-  xlab("") +
-  theme(
-    legend.position = "top",             # similar to "topleft"
-    legend.title = element_text(face = "bold"),
-    legend.text = element_text(size = 10)
-  )
+  scale_fill_manual(name = "endpoint",
+                    values = c("OS" = "dodgerblue", "TBE" = "seagreen3")) +
+  geom_hline(yintercept = 0, colour = "firebrick", lwd = 0.7, lty = 2) +
+  ylab("") +
+  xlab("")+
+  ggtitle("Log ratio of standard errors") 
+
+## ---------- Combine ----------
+(p_A | p_B) +
+  plot_layout(guides = "collect") +
+  plot_annotation(tag_levels = "A") &
+  theme(plot.tag = element_text(face = "bold", size = 20),
+        plot.title = element_text(face = "bold", size = 13, hjust = 0.5),
+        legend.position = "bottom",
+        legend.title = element_text(face = "bold"),
+        legend.text = element_text(size = 10))
 ```
 
-The logarithm of the ratio of standard errors now shows more variability for OS compared to TBE. The ratios vary around 0 for TBE, but tend to be larger than 0 for OS. This suggests that the standard errors of sensitivity analyses for OS tend to be larger than the standard errors for the primary analysis. This is not the case for TBE.
+From those boxplots we can see that while the logarithm of ratio of HRs in TBE has a median equal to 0 with narrow quartiles, there are more outliers than in OS, whose median is slightly below 0 and has wider quartiles, but no outliers. A similar pattern is visible in the ratio of standard errors, where for TBE has a median slightly below 0 (-0.0055), with narrow quartiles and many outliers, while OS shows more variability but only one outlier. This suggests that the standard errors of sensitivity analyses for OS tend to be larger than the standard errors for the primary analysis. This is not the case for TBE.
 
-To summarise, the distribution of $\log(\frac{SE_{Sensitivity}}{SE_{Primary}})$ is:
+To examine the relationship between the differences in HRs and the differences in standard errors, we plotted $\log\left(\frac{HR_{\scriptsize \mbox{Sensitivity}}}{HR_{\scriptsize \mbox{Primary}}}\right)$ against $\log(\frac{SE_{\scriptsize \mbox{Sensitivity}}}{SE_{\scriptsize \mbox{Primary}}})$ (Fig. \@ref(fig:Scatter-plot-TBE) for TBE and Fig. \@ref(fig:Scatter-plot-OS))in a scatter plot, where each dot was colored differently according to its NCT, to better visualize the cluster of different trials.
 
-**TBE**
-
-```{r}
-summary(dif_TBE_clean$log_se)
-```
-
-**OS**
-
-```{r}
-summary(dif_OS_clean$log_se)
-```
-
-To examine the possibility of a relationships between the differences in HRs and the differences in standard errors, we plotted $\log\left(\frac{HR_{\scriptsize \mbox{Sensitivity}}}{HR_{\scriptsize \mbox{Primary}}}\right)$ against $\frac{SE_{\scriptsize \mbox{Sensitivity}}}{SE_{\scriptsize \mbox{Primary}}}$ in a scatter plot, where each dot was colored differently according to its NCT, to better visualize the cluster of different trials.
-
-This produced the following scatter plots
-
-```{r Scatter plot TBE, fig.width=7, fig.height=5, warning=FALSE, echo=FALSE}
+```{r Scatter.plot-TBE, fig.cap="Log ratio of HRs vs ratio of SE for TBE",fig.width=7, fig.height=5, warning=FALSE, echo=FALSE}
 
 library(ggplot2)
 library(viridis)
@@ -621,7 +568,7 @@ cowplot::ggdraw(legend_only_TBE)
 
 ```
 
-```{r Scatter plot OS, fig.width=7, fig.height=5, warning=FALSE, echo=FALSE}
+```{r Scatter.plot-OS, fig.cap="Log ratio of HRs vs ratio of SE for OS" fig.width=7, fig.height=5, warning=FALSE, echo=FALSE}
 dif_OS_clean$log_ratio <- fix_column(dif_OS_clean$log_ratio)
 dif_OS_clean$log_se <- fix_column(dif_OS_clean$log_se)
 dif_OS_clean$NCT <- as.factor(dif_OS_clean$NCT)
@@ -667,15 +614,22 @@ p_main_OS
 cowplot::ggdraw(legend_only_OS)
 ```
 
-These plots show an interesting pattern: smaller values of the log HRR seem to correspond to larger values of the ratio of standard errors and vice versa. This relationship is further explored through regression analyses.
+Fig. \@ref(fig:Scatter-plot-TBE) and Fig. \@ref(fig:Scatter-plot-OS) indicates that smaller values of $\log\left(\frac{HR_{\scriptsize \mbox{Sensitivity}}}{HR_{\scriptsize \mbox{Primary}}}\right)$ correspond to larger values of $\log\left(\frac{SE_{\scriptsize \mbox{Sensitivity}}}{SE_{\scriptsize \mbox{Primary}}}\right)$ and vice versa.
+
+If we consider the hazard ration as $HR=\frac{\frac{O_1}{E_1}}{\frac{O_0}{E_0}}$, where $O_i= Observed\ events \ in \ group \ i$ and $E_i= Expected \ events \ in \ group \ i$ and $SE(log(HR))=\sqrt{\frac{1}{E_1}+ \frac{1}{E_0}}$, the change in the standard errors between primary and sensitivity analyses would indicate that either  $E_1$ or $E_0$ has changed. 
+Assuming $\frac{O_1}{O_0}$ has not changed, $\log\left(\frac{HR_{\scriptsize \mbox{Sensitivity}}}{HR_{\scriptsize \mbox{Primary}}}\right)>0$ indicates that $HR_{Sensitivity}>HR_{Primary}$. Given that higher values of the logarithm of ratio of HRs corresponds also to lower values of the logarithm of ratio of standard errors, this indicates that $E_{0,Sensitivity}>E_{0,Primary}$.
+Similarly, taking $\log\left(\frac{HR_{\scriptsize \mbox{Sensitivity}}}{HR_{\scriptsize \mbox{Primary}}}\right)<0$ will indicate $HR_{Sensitivity}<HR_{Primary}$ and given that lower values of the logarithm of ratio of HRs corresponds to higher values of the logarithm of ratio of standard errors, this will indicate that $E_{0,Sensitivity}>E_{0,Primary}$.
+This would suggest that sensitivity analyses change the expected number event for the control group but not in the treatment group.
+Since $E_0+E_1=O_0+O_1$, if $E_0$ increase but $E_1$ does not change, that implies that also $O_0+O_1$ also increase, so we should observe more events in the sensitivity analyses than in the primary ones.
+
 
 ### Modelling
 
-We proceeded to explore the relationship between HRs and standard error differences using a regression model.
+This relationship between HRs and standard error differences was further explored through different regression models, to examine the influence that the different categories and that the value of primary HR could have on it.
 
 #### Simple linear models
 
-We initially fitted a linear regression model for each endpoint. For **TBE** we obtained the following results:
+We initially fitted a linear regression model for each endpoint. **TBE** we obtained the following results:
 
 ```{r Linear model TBE, echo=FALSE}
 m_TBE=lm(log_ratio ~ 0+log_se, data = dif_TBE_clean)
