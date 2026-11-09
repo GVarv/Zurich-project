@@ -31,9 +31,9 @@ options(kableExtra.html.bsTable = TRUE)
 
 **Background:** Tumor-based endpoints are part of the main endpoint in oncological research, but their evaluation is based on a series of subjective choices, which include the rules used to censor patients and the timing at which tumor progression is recorded and are therefore more prone to bias than more objective endpoint such as Overall Survival (OS). Sensitivity analyses are used to evaluate the robustness of trial results for the different endpoints, but the inclusion of the type of sensitivity analysis is also a subjective choice. Our study aim at compare the results between primary and sensitivity analyses and identify possible pattern of choice.
 
-**Methods:** We extracted the numerical results for all the primary and sensitivity analyses reported in publicly available documents for each trials. We then used these results to compute the ratio of Hazard Ratios (HRs) and of Standard Errors between primary and sensitivity analyses and then analysed the relation of those to ratios to explore the relationship between primary and sensitivity analyses, also investigating the role that the different type of sensitivity analyses have in this relationship.
+**Methods:** We extracted the numerical results for all the primary and sensitivity analyses reported in publicly available documents for each trials. We then used these results to compute the ratio of Hazard Ratios (HRs) and of Standard Errors between primary and sensitivity analyses and then analysed the relation of those to ratios to explore the relationship between primary and sensitivity analyses, also investigating the role that the different type of sensitivity analyses and the value of the Hazard Ratios for the primary analysis have in this relationship.
 
-**Results:**
+**Results:** The simple linear model showed a relationship between the ratio of standard errors and the ratio of Hazard ratios, but the other models explored did not have significant covariates.also the models accounting for clustering of sensitivity analyses gave results very close to the simple linear model ones.
 
 ## Introduction
 
@@ -79,7 +79,7 @@ At the same time we have also collected the publicly available information on th
 
 ### Data extraction
 
-We created an [spreadsheet](https://uniren1-my.sharepoint.com/:x:/g/personal/giulia_varvara_univ-rennes_fr/EYIBktM27lhIvCf4wRn-030BDRcOL2O7wJAb2NL6Ws71Hw?e=XwaLyy) containing, for each RCT, information about the main time-to-event endpoint analysed, the type of primary and sensitivity analyses reported in any of the publicly available documents, the censoring rules employed and the values for HRs, lower and upper bounds of the Confidence Intervals, $p$-value and, when possible, the median survival time.
+We created an [spreadsheet](https://uniren1-my.sharepoint.com/:x:/g/personal/giulia_varvara_univ-rennes_fr/EYIBktM27lhIvCf4wRn-030BDRcOL2O7wJAb2NL6Ws71Hw?e=XwaLyy) containing, for each RCT, information about the main time-to-event endpoint analysed, the type of primary and sensitivity analyses reported in any of the publicly available documents (EPARs, publications and their supplementary materials), the censoring rules employed and the values for HRs, lower and upper bounds of the Confidence Intervals, $p$-value and, when possible, the median survival time.
 
 For simplification, all the different tumor-based endpoints such as Progression-Free Survival (PFS), Disease-Free Survival (DFS), Relapse-Free Survival (RFS) etc. were grouped under the label of Tumor-Based Endpoint (TBE) in our analyses. Then we proceeded to use the extracted information to compare the results from the primary analyses with the ones obtained in the sensitivity analyses in each RCT.
 
@@ -616,12 +616,7 @@ cowplot::ggdraw(legend_only_OS)
 
 Fig. \@ref(fig:Scatter-plot-TBE) and Fig. \@ref(fig:Scatter-plot-OS) indicates that smaller values of $\log\left(\frac{HR_{\scriptsize \mbox{Sensitivity}}}{HR_{\scriptsize \mbox{Primary}}}\right)$ correspond to larger values of $\log\left(\frac{SE_{\scriptsize \mbox{Sensitivity}}}{SE_{\scriptsize \mbox{Primary}}}\right)$ and vice versa.
 
-If we consider the hazard ration as $HR=\frac{\frac{O_1}{E_1}}{\frac{O_0}{E_0}}$, where $O_i= Observed\ events \ in \ group \ i$ and $E_i= Expected \ events \ in \ group \ i$ and $SE(log(HR))=\sqrt{\frac{1}{E_1}+ \frac{1}{E_0}}$, the change in the standard errors between primary and sensitivity analyses would indicate that either  $E_1$ or $E_0$ has changed. 
-Assuming $\frac{O_1}{O_0}$ has not changed, $\log\left(\frac{HR_{\scriptsize \mbox{Sensitivity}}}{HR_{\scriptsize \mbox{Primary}}}\right)>0$ indicates that $HR_{Sensitivity}>HR_{Primary}$. Given that higher values of the logarithm of ratio of HRs corresponds also to lower values of the logarithm of ratio of standard errors, this indicates that $E_{0,Sensitivity}>E_{0,Primary}$.
-Similarly, taking $\log\left(\frac{HR_{\scriptsize \mbox{Sensitivity}}}{HR_{\scriptsize \mbox{Primary}}}\right)<0$ will indicate $HR_{Sensitivity}<HR_{Primary}$ and given that lower values of the logarithm of ratio of HRs corresponds to higher values of the logarithm of ratio of standard errors, this will indicate that $E_{0,Sensitivity}>E_{0,Primary}$.
-This would suggest that sensitivity analyses change the expected number event for the control group but not in the treatment group.
-Since $E_0+E_1=O_0+O_1$, if $E_0$ increase but $E_1$ does not change, that implies that also $O_0+O_1$ also increase, so we should observe more events in the sensitivity analyses than in the primary ones.
-
+If we consider the hazard ration as $HR=\frac{\frac{O_1}{E_1}}{\frac{O_0}{E_0}}$, where $O_i= Observed\ events \ in \ group \ i$ and $E_i= Expected \ events \ in \ group \ i$ and $SE(log(HR))=\sqrt{\frac{1}{E_1}+ \frac{1}{E_0}}$, the change in the standard errors between primary and sensitivity analyses would indicate that either $E_1$ or $E_0$ has changed. Assuming $\frac{O_1}{O_0}$ has not changed, $\log\left(\frac{HR_{\scriptsize \mbox{Sensitivity}}}{HR_{\scriptsize \mbox{Primary}}}\right)>0$ indicates that $HR_{Sensitivity}>HR_{Primary}$. Given that higher values of the logarithm of ratio of HRs corresponds also to lower values of the logarithm of ratio of standard errors, this indicates that $E_{0,Sensitivity}>E_{0,Primary}$. Similarly, taking $\log\left(\frac{HR_{\scriptsize \mbox{Sensitivity}}}{HR_{\scriptsize \mbox{Primary}}}\right)<0$ will indicate $HR_{Sensitivity}<HR_{Primary}$ and given that lower values of the logarithm of ratio of HRs corresponds to higher values of the logarithm of ratio of standard errors, this will indicate that $E_{0,Sensitivity}>E_{0,Primary}$. This would suggest that sensitivity analyses change the expected number event for the control group but not in the treatment group. Since $E_0+E_1=O_0+O_1$, if $E_0$ increase but $E_1$ does not change, that implies that also $O_0+O_1$ also increase, so we should observe more events in the sensitivity analyses than in the primary ones.
 
 ### Modelling
 
@@ -635,54 +630,56 @@ We initially fitted a linear regression model for each endpoint. **TBE** we obta
 m_TBE=lm(log_ratio ~ 0+log_se, data = dif_TBE_clean)
 
 summ(m_TBE,model.info=FALSE)
+confint(m_TBE, level = 0.95)
 #tableRegression(m_TBE, xtable = FALSE)
 
 coeff_TBE<-coefficients(m_TBE)            
 #intercept_TBE<-coeff_TBE[1]
-slope_TBE<- coeff_TBE[2]
+slope_TBE<- coeff_TBE
 
 p_main_TBE+geom_abline(slope = coeff_TBE, color="black", linetype="dashed", linewidth=0.9)
 
 round(AIC(m_TBE),2)
 round(BIC(m_TBE),2)
-summary(m_TBE)
+#summary(m_TBE)
 ```
 
 There is a significant relationship between the two variables with estimated slope of `r slope_TBE`
 
-This indicates that the ratio in standard errors tends to decrease when the log HR ratio increases.
+This confirms that the ratio in standard errors tends to decrease when the log HR ratio increases, as seen in the scatter plot.
 
 The same model for **OS** gave the following output:
 
 ```{r Linear model OS, echo=FALSE}
 m_os=lm(log_ratio ~ 0+log_se, data = dif_OS_clean)
 summ(m_os,model.info=FALSE)
+confint(m_os, level = 0.95)
 #tableRegression(m_os, xtable = FALSE)
 
 coeff_OS<-coefficients(m_os)          
 #intercept_OS<-coeff_OS[1]
-#slope_OS<- coeff_OS[2]
+slope_OS<- coeff_OS
 
 p_main_OS+geom_abline(slope = coeff_OS, color="black", linetype="dashed", linewidth=0.9)
 
 round(AIC(m_os),2)
 round(BIC(m_os),2)
-summary(m_os)
+#summary(m_os)
 ```
 
-The results for OS seem to show an estimated slope of $-0.18$ in the same direction as the ones for TBE.
+The results for OS seem to show an estimated slope of `r slope_OS` in the same direction as the ones for TBE.
 
 #### Linear model with covariates
 
-To identify the possible causes of the relationship between $\log(\frac{SE_{\scriptsize \mbox{Sensitivity}}}{SE_{\scriptsize \mbox{Primary}}})$ and $\log\left(\frac{HR_{\scriptsize \mbox{Sensitivity}}}{HR_{\scriptsize \mbox{Primary}}}\right)$ we added expanded the linear model to include the category identifier of the sensitivity analyses as covariate, as they might have an impact on the number of people at risk or on the number of events.
+To identify the possible causes of the relationship between $\log(\frac{SE_{\scriptsize \mbox{Sensitivity}}}{SE_{\scriptsize \mbox{Primary}}})$ and $\log\left(\frac{HR_{\scriptsize \mbox{Sensitivity}}}{HR_{\scriptsize \mbox{Primary}}}\right)$ we expanded the linear model to include the category identifier of the sensitivity analyses as covariate, as they might have an impact on the number of people at risk or on the number of events.
 
-Changing censoring rules could have an impact on both the number of events and of people at risk at various time, modifying both the HR and standard errors. This is because censoring more individuals reduces the number of people at risk and at prevent any event that these individuals might have had to be included in the analysis. Also, if informative censoring is present, this will impact one arm more than the other, changing between the balance between the number of events in the different arms.
+Changing censoring rules could have an impact on both the number of events and of people at risk at various time, modifying both the HR and standard errors. This is because censoring more individuals reduces the number of people at risk and at prevent any event that these individuals might have had to be included in the analysis.
 
 Similarly, using different population for the analysis can also change the relationship between the number of people at risk and the number of events in each arm, which might also impact the standard errors and the HR.
 
 To examine the impact that these changes can have on the analysis we used a linear mixed model that included also the category of sensitivity analysis category as covariate.
 
-To do so we used a dummy variable for each category that would have value 1 if a change in the category was present in the sensitivity analysis and 0 if it did not. This allowed us to consider also the sensitivity analyssi that had changes in multiple categories in each of the right categories at the same time.
+To do so we used a dummy variable for each category that would have value 1 if a change in the category was present in the sensitivity analysis and 0 if it did not. This allowed us to consider also the sensitivity analyses that had changes in multiple categories at the same time.
 
 This covariates model for **TBE** gave the following results:
 
@@ -692,7 +689,7 @@ m_TBE_cov=lm(log_ratio ~0+ log_se*Censoring+log_se*Methods+log_se*Population, da
 summ(m_TBE_cov,model.info=FALSE)
 round(AIC(m_TBE_cov),2)
 round(BIC(m_TBE_cov),2)
-summary(m_TBE_cov)
+#summary(m_TBE_cov)
 ```
 
 The results for same model for **OS** were the following:
@@ -703,7 +700,7 @@ summ(m_os_cov,model.info=FALSE)
 
 round(AIC(m_os_cov),2)
 round(BIC(m_os_cov),2)
-summary(m_os_cov)
+#summary(m_os_cov)
 ```
 
 From these the results we can see that the category of sensitivity analysis is not relevant neither for *TBE* nor *OS*.
@@ -722,7 +719,7 @@ round(AIC(mHR_TBE),2)
 round(BIC(mHR_TBE),2)
 ```
 
-This would suggest that the HR value of the primary analysis has a small impact on the relationship between $\log(\frac{SE_{\scriptsize \mbox{Sensitivity}}}{SE_{\scriptsize \mbox{Primary}}})$ and $\log\left(\frac{HR_{\scriptsize \mbox{Sensitivity}}}{HR_{\scriptsize \mbox{Primary}}}\right)$, while the interaction term between the logarithm of the ratio of standard errors has a bigger impact in the other direction but a larger p-value. Similarly the logarithm of the ratio of standard error has a bigger impat, in the same direction of the one of the primary HR, but a larger p-value.
+This would suggest that the HR value of the primary analysis has a small impact on the relationship between $\log(\frac{SE_{\scriptsize \mbox{Sensitivity}}}{SE_{\scriptsize \mbox{Primary}}})$ and $\log\left(\frac{HR_{\scriptsize \mbox{Sensitivity}}}{HR_{\scriptsize \mbox{Primary}}}\right)$, while the interaction term between the logarithm of the ratio of standard errors has a bigger impact in the other direction but a larger p-value. Similarly the logarithm of the ratio of standard error has a bigger impact, in the same direction of the one of the primary HR, but a larger p-value.
 
 ```{r Ref HR as covariate OS}
 mHR_OS= lm(log_ratio ~ 0+log_se * log(ref_HR), data = dif_OS_clean) #Remove methods
@@ -772,7 +769,7 @@ r2(r_model_OS)
 
 For both endpoints the results are very close to the one we obtained for the simple linear regression model.
 
-Then we included the HR of the primary analsyis as a covariate.
+Then we included the HR of the primary analysis as a covariate.
 
 ```{r Random model SE TBE}
 r_model_TBE_se=lmer(log_ratio ~0+log_se * log(ref_HR)+(1|NCT), data = dif_TBE_clean)
@@ -796,34 +793,30 @@ r2_manual <- cor(fitted_vals, dif_OS_clean$log_se)^2
 r2(r_model_OS_se)
 ```
 
-We did not obtain the same type of results for *OS*, but this endpoint also has a much smaller sample size (46v vs 191 data points for TBE) so it has a considerably larger standard error because of a smaller sample size and an increased residual variance. Also there were only few studies that had more than 1 sensitivity analysis for *OS*
+We did not obtain the same type of results for *OS*, but this endpoint also has a much smaller sample size (46 for OS vs 191 data points for TBE) so it has a considerably larger standard error because of a smaller sample size and an increased residual variance. Also there were only few studies that had more than 1 sensitivity analysis for *OS.*
 
-## Case studies
+## Discussion
 
-Looking at the regression plots we can identify few outliers. In the case of *OS* there are few data points for which $\log(\frac{SE_{\scriptsize \mbox{Sensitivity}}}{SE_{\scriptsize \mbox{Primary}}})$ does not seem to change much, remaining between 0 and 0.2, but $\log(\frac{HR_{\scriptsize \mbox{Sensitivity}}}{HR_{\scriptsize \mbox{Primary}}})$ present large values. We identify these data point and listed the corresponding sensitivity analyses:
+In this exploratory analysis, we examined whether the difference in standard errors of between sensitivity and primary analysis in oncological RCTs was associated with a change in the effect estimate.
 
-```{r, echo=FALSE}
-case_studies_OS=dif_OS_clean[(dif_OS_clean$log_se>0 & dif_OS_clean$log_se<0.3 & dif_OS_clean$log_ratio<(-0.1)), ]
-#CS_OS=unique(case_studies_OS$NCT)
+Both the simple linear model and the scatter plot indicated a relationship between the ratio of standard errors and the ratio of HRs (-0,66 with 95% CI [-0.82,-0.51] for TBE and -0.22 and 95% Ci [-0.33,-0,12] for OS). Sensitivity analyses with smaller standard errors in the sensitivity analyses tended to report larger HRs , which is something we would expect if the type of analysis affected the amount of events of population included in the analysis.
 
-#table(case_studies_OS$Type.of.sensitivity.analysis)
-```
+To explore what might cause this relationship, we added the category of the sensitivity analysis and the original value of HR as covariates in the model. None of the covariates we included was significantly associated with the ratio of HRs, so we could not identify a specific trial characteristics to explain the pattern. This might also reflect some limitations of this study, which might have limited power to detect smaller effects.
 
--   NCT02409342 (3): The sensitivity analyses that stand out are the ones where, Sensitivity analysis of OS for NPT was based on the time interval during, which patients received NPT until the event or censoring time was discounted at 10%, 20%, and 30% for both arms to investigate how the OS results would have looked if the NPT was not available. -NCT03110562: The sensitivity analysis to stand out was using a switch-adjusted HR based on the two-stage estimation method (Latimer 2017, Latimer 2018). -NCT03151811: Sensitivity analysis which run the analysis only for the target population -NCT03391466: Rank preserving structural failure time model {Robins 1991} was used to adjust treatment drop in from standard of care to chimeric antigen receptor T-cell therapy. -NCT03594747 (2): Two-stage method (Latimer et al 2014) was also performed to estimate the in-study crossover effect on the post-progression survival (PPS) using data from patients who progressed per IRC assessment before any subsequent anticancer therapy in the control arm only. It counts 2 sensitivity analysis because this comparison is run both for A vs B and B vs C -NCT03663205: Two-stage method (Latimer et al 2014) was also performed to estimate the in-study crossover effect on the post-progression survival (PPS) using data from patients who progressed per IRC assessment before any subsequent anticancer therapy in the control arm only. -NCT03914612: The sensitivity analysis to stand out was a 2-stage model
+Because most trials reported more than one sensitivity analysis per endpoint and therefore the data points were not strictly independent, we repeated the analyses accounting for clustering of sensitivity analyses withing trials using mixed-effects model with random intercepts for each trial. The results obtained were similar to the ones yield by the simple linear models, which suggests that the pattern is not driven by the non-independence of the data points. However, since most trials only reported few sensitivity analysis, the estimation of the between-trial variability might be imprecise.
 
-*TBE* presented also few but less strong outliers, so we also listed those:
+Overall these findings suggest that the difference in HRs between primary and sensitivity analyses are consistent with differences in the standard errors between them, but given the limitations of this study, further research on this association is needed.
 
-```{r, echo=FALSE}
-case_studies_TBE=dif_TBE_clean[dif_TBE_clean$log_ratio>0.35, ]
-#CS_TBE=unique(case_studies_TBE$NCT)
+## Limitations
 
-#table(case_studies_TBE$Type.of.sensitivity.analysis)
-```
+This study presents several limitations.
 
--NCT00836654: The sensitivity analysis that stands out is the one that counted all censored events as PuFS events -NCT03173248:The sensitivity analysis that stands out is a Log-rank test stratified by the IRT randomization stratification factors and based on the FAS -NCT04008030:The analysis that stands out is by BICR in all 1L randomized patients, but it is not listed as sensitivity analysis but as a secondary endpoint -NCT04322539: The analysis that stands out changes the censoring rules to include all the deaths observed during the study in the analysis irrespective of when they occurred. This is also the one that is further from the regression line (with log_HR \>0.6 while the regression line at that point of log_se is slightly larger than 0)
+Firstly, it is an exploratory component of a larger reproducibility study, therefore the sample size was determined to obtain adequate power for the primary reproducibility objective. As a result this part of the study might lack the necessary power to detect more modest associations between trial characteristics and the ratio of HRs, therefore the absence of significant effects should not be interpreted as evidence of a lack of association. Also any significant findings would also need to be interpreted carefully because of multiplicity.
+
+Another limitation is that our analyses relies on the numerical results reported on publicly available documents (EPARs, publications and their supplementary materials). It is possible the trials explored have conducted additional sensitivity analyses that were not reported in the documents we extracted our data from. This could bias our estimate in either direction as we do not know if the non-reported sensitivity analysis results differ systematically from the reported ones.
 
 ## Conclusions
 
-The 60 randomly selected studies that we analysed in this project gave us an idea on the use of sensitivity analyses in oncological RCTs. Even if sensitivity analyses are a very useful practice, especially when dealing with tumour-based endpoints, which are more prone to subjectivity and bias, they are still not planned, nor reported for many studies. The analyses that were reported employed mostly different censoring rules than those used in the primary analysis, and a lower number of them also focused on the different methods and assessment strategies. When comparing these sensitivity analyses with the primary, it was possible to see some effect of Hazard Ratios on the Standard errors. More specifically the analyses we run seemed to point at a relationship between the original value of HR for the primary analysis and a change in the standard errors of sensitivity analyses.
+The 60 randomly selected studies that we analysed in this project gave us an idea on the use of sensitivity analyses in oncological RCTs. Even if sensitivity analyses are a very useful practice, especially when dealing with tumor-based endpoints, which are more prone to subjectivity and bias, they are still not planned, nor reported for many studies. The analyses that were reported employed mostly different censoring rules than those used in the primary analysis, and a lower number of them also focused on the different methods and assessment strategies. When comparing these sensitivity analyses with the primary, it was possible to see some effect of Hazard Ratios on the Standard errors. More specifically the analyses we run seemed to point at a relationship between the original value of HR for the primary analysis and a change in the standard errors of sensitivity analyses.
 
 Further assessment on new samples of studies would be needed to confirm this hypothesis.
