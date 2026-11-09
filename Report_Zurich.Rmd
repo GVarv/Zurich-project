@@ -29,11 +29,13 @@ options(kableExtra.html.bsTable = TRUE)
 
 ## **Abstract**
 
-**Background:** Tumor-based endpoints are part of the main endpoint in oncological research, but their evaluation is based on a series of subjective choices, which include the rules used to censor patients and the timing at which tumor progression is recorded and are therefore more prone to bias than more objective endpoint such as Overall Survival (OS). Sensitivity analyses are used to evaluate the robustness of trial results for the different endpoints, but the inclusion of the type of sensitivity analysis is also a subjective choice. Our study aim at compare the results between primary and sensitivity analyses and identify possible pattern of choice.
+**Background:** Tumor-based endpoints (TBE), such as progression-free survival, are widely used as primary endpoints in oncology trials. Their assessment relies on subjective choices, including the censoring rules and the timing at which progression is recorded, which makes them more prone to bias than objective endpoints such as overall survival (OS).
+Sensitivity analyses are used to evaluate the robustness of trial results, but the choice of which sensitivity analyses to perform is itself subjective. We aimed to compare the results of primary and sensitivity analyses and to identify possible patterns in the choice of sensitivity analyses.
 
-**Methods:** We extracted the numerical results for all the primary and sensitivity analyses reported in publicly available documents for each trials. We then used these results to compute the ratio of Hazard Ratios (HRs) and of Standard Errors between primary and sensitivity analyses and then analysed the relation of those to ratios to explore the relationship between primary and sensitivity analyses, also investigating the role that the different type of sensitivity analyses and the value of the Hazard Ratios for the primary analysis have in this relationship.
+**Methods:** We extracted the numerical results for all the primary and sensitivity analyses reported in publicly available documents for 60 randomly selected randomized control trials (RCTs )that  received a positive opinion from the Committee for Medicinal Products for Human Use (CHMP) between January 01, 2020 and December 31, 2024. For each sensitivity analysis, we computed the ratio of hazard ratios (HRs) and the ratio of standard errors (SEs) relative to the primary analysis. We modelled the relationship between these two ratios using linear models, and explored the role of the type of sensitivity analysis and of the primary analysis HR as covariates. Because trials contributed several sensitivity analyses, we also fitted models accounting for clustering within trials using a mixed model with random intercept for each trial.
 
-**Results:** The simple linear model showed a relationship between the ratio of standard errors and the ratio of Hazard ratios, but the other models explored did not have significant covariates.also the models accounting for clustering of sensitivity analyses gave results very close to the simple linear model ones.
+**Results:** 191 sensitivity analyses were included for TBE and 46 for OS. The simple linear model showed an association between the ratio of standard errors and the ratio of Hazard ratios (-0,66 with 95% CI [-0.82,-0.51] for TBE and -0.22 and 95% Ci [-0.33,-0,12] for OS), but none of the covariates explored yield significant associations with the ratio of HRs.The models accounting for clustering within trials gave results very similar to the simple linear model.
+
 
 ## Introduction
 
@@ -67,7 +69,7 @@ This study focused on this last point, making use of the publicly available resu
 
 ## Methods
 
-We identified all oncological indications that received a positive opinion from the Committee for Medicinal Products for Human Use (CHMP) between January 01, 2020 and December 31, 2024. Using the European public assessment reports (EPARs), we then identified 223 RCTs referred to as ‘main studies’.
+We identified all oncological indications that received a positive opinion from the Committee for Medicinal Products for Human Use (CHMP) of the European Medicine Agency (EMA) between January 01, 2020 and December 31, 2024. Using the European public assessment reports (EPARs), we then identified 223 RCTs referred to as ‘main studies’.
 
 We used the results of an earlier audit of data sharing by pharmaceutical companies for oncology trials, to calculate the size of the sample needed for our study. This previous paper found that only 34% of trials that supported FDA approval between 2011 and 2021 had accessible IPD [@hopkins2023]. We used 34% as the expected proportion of reproducible trials and 12% as the half-width of the 95% CI and obtained 60 trials as required sample size for our study. Therefore we selected 60 RCTs using the sampling function \texttt{sample()} implemented in R, setting a seed for computational reproducibility.
 
@@ -817,6 +819,11 @@ Another limitation is that our analyses relies on the numerical results reported
 
 ## Conclusions
 
-The 60 randomly selected studies that we analysed in this project gave us an idea on the use of sensitivity analyses in oncological RCTs. Even if sensitivity analyses are a very useful practice, especially when dealing with tumor-based endpoints, which are more prone to subjectivity and bias, they are still not planned, nor reported for many studies. The analyses that were reported employed mostly different censoring rules than those used in the primary analysis, and a lower number of them also focused on the different methods and assessment strategies. When comparing these sensitivity analyses with the primary, it was possible to see some effect of Hazard Ratios on the Standard errors. More specifically the analyses we run seemed to point at a relationship between the original value of HR for the primary analysis and a change in the standard errors of sensitivity analyses.
+The analysis of the 60 randomly selected oncological RCTs provided an overview of how sensitivity analyses are reported in this field. Those analyses are especially valuable for tumor-based endpoints, such as PFS or DFS, which are more prone to subjectivity and assessment bias. Yet they were not planned or reported in 15 of the 60 studies in the case of tumor-based endpoints and 33 of 60 studies for OS.
 
-Further assessment on new samples of studies would be needed to confirm this hypothesis.
+When they were reported, most varied the methods (80%) for OS, while for TBE the majority of sensitivity analyses changed the censoring rules used (50.8%), closely followed by changes in the analytic methods (36.1%).
+Our exploratory analysis comparing sensitivity analyses with their primary analyses found an association between the ratio of standard errors and the ratio of HRs (-0,66 with 95% CI [-0.82,-0.51] for TBE and -0.22 and 95% Ci [-0.33,-0,12] for OS), suggesting that part of the divergence may reflect differences in precision rather than differences in effect. The covariates examined did not explain this association and accounting for clustering within trials did not show a relevant difference in results.
+
+Given the exploratory nature of this analysis and the limited sample size, this findings would require further assessment based on a larger sample of trials, ideally with more complete reporting of all the sensitivity analyses.
+
+
