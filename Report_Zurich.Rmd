@@ -18,6 +18,7 @@ header-includes:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(dev = "cairo_pdf")
 knitr::opts_chunk$set(fig.pos = "H", out.extra = "")
+knitr::opts_chunk$set(crop = NULL)
 
 library(kableExtra)
 library(jtools)
@@ -26,31 +27,29 @@ options(kableExtra.html.bsTable = TRUE)
 
 ## **Abstract**
 
-**Background:** Tumor-based endpoints (TBE), such as progression-free survival, are widely used as primary endpoints in oncology trials. Their assessment relies on subjective choices, including the censoring rules and the timing at which progression is recorded, which makes them more prone to bias than objective endpoints such as overall survival (OS).
-Sensitivity analyses are used to evaluate the robustness of trial results, but the choice of which sensitivity analyses to perform is itself subjective. We aimed to compare the results of primary and sensitivity analyses and to identify possible patterns in the choice of sensitivity analyses.
+**Background:** Tumor-based endpoints (TBE), such as progression-free survival, are widely used as primary endpoints in oncology trials. Their assessment relies on subjective choices, including the censoring rules and the timing at which progression is recorded, which makes them more prone to bias than objective endpoints such as overall survival (OS). Sensitivity analyses are used to evaluate the robustness of trial results, but the choice of which sensitivity analyses to perform is itself subjective. We aimed to compare the results of primary and sensitivity analyses and to identify possible patterns in the choice of sensitivity analyses.
 
-**Methods:** We extracted the numerical results for all the primary and sensitivity analyses reported in publicly available documents for 60 randomly selected randomized control trials (RCTs )that  received a positive opinion from the Committee for Medicinal Products for Human Use (CHMP) between January 01, 2020 and December 31, 2024. For each sensitivity analysis, we computed the ratio of hazard ratios (HRs) and the ratio of standard errors (SEs) relative to the primary analysis. We modelled the relationship between these two ratios using linear models, and explored the role of the type of sensitivity analysis and of the primary analysis HR as covariates. Because trials contributed several sensitivity analyses, we also fitted models accounting for clustering within trials using a mixed model with random intercept for each trial.
+**Methods:** We extracted the numerical results for all the primary and sensitivity analyses reported in publicly available documents for 60 randomly selected randomized control trials (RCTs )that received a positive opinion from the Committee for Medicinal Products for Human Use (CHMP) between January 01, 2020 and December 31, 2024. For each sensitivity analysis, we computed the ratio of hazard ratios (HRs) and the ratio of standard errors (SEs) relative to the primary analysis. We modelled the relationship between these two ratios using linear models, and explored the role of the type of sensitivity analysis and of the primary analysis HR as covariates. Because trials contributed several sensitivity analyses, we also fitted models accounting for clustering within trials using a mixed model with random intercept for each trial.
 
 **Results:** 191 sensitivity analyses were included for TBE and 46 for OS. The simple linear model showed an association between the ratio of standard errors and the ratio of Hazard ratios (-0,66 with 95% CI [-0.82,-0.51] for TBE and -0.22 and 95% Ci [-0.33,-0,12] for OS), but none of the covariates explored yield significant associations with the ratio of HRs.The models accounting for clustering within trials gave results very similar to the simple linear model.
 
-
 ## Introduction
 
-An essential part of oncological research is based on survival analysis, as one of the main goals is to reduce mortality in patients, as well as increase the time without disease progression [@wilson2015]. Overall survival (OS), defined as the time from randomisation to death, is seen as the gold standard in oncology clinical trials [@gormley2025], as it is easy to measure, since we usually have a precise time for death. It is also very objective, as death is a well-defined endpoint and its measurement cannot be biased by the researcher’s assessment. Moreover, the censoring rules, which are the set of scenarios that describe when a patient will be censored, employed in the analysis of OS tend to be simple and consistent among trials, reducing the possibility of bias. At the same time, OS requires very long follow-up periods and its usefulness is limited in the case of slow-progressing diseases with a long survival expectancy, as there is a high chance of intercurrent events or changes in treatment [@kilickap].
+An essential part of oncological research is based on survival analysis, as one of the main goals is to reduce mortality in patients, as well as increase the time without disease progression [@wilson_outcomes_2015]. Overall survival (OS), defined as the time from randomisation to death, is seen as the gold standard in oncology clinical trials [@gormley_approaches_2025], as it is easy to measure, since we usually have a precise time for death. It is also very objective, as death is a well-defined endpoint and its measurement cannot be biased by the researcher’s assessment. Moreover, the censoring rules, which are the set of scenarios that describe when a patient will be censored, employed in the analysis of OS tend to be simple and consistent among trials, reducing the possibility of bias. At the same time, OS requires very long follow-up periods and its usefulness is limited in the case of slow-progressing diseases with a long survival expectancy, as there is a high chance of intercurrent events or changes in treatment [@kilickap_endpoints_nodate].
 
-These are some of the reasons why surrogate endpoints based on tumor assessment are widely accepted, even if they are continuous endpoints measured by discrete assessments nd therefore rely on the timing of the investigation [@wilson2015].
+These are some of the reasons why surrogate endpoints based on tumor assessment are widely accepted, even if they are continuous endpoints measured by discrete assessments nd therefore rely on the timing of the investigation [@wilson_outcomes_2015].
 
 The most common tumor-based endpoints are:
 
--   Progression-Free Survival (PFS), defined as the time from randomisation until the first evidence of disease progression or death[@progress2011].
+-   Progression-Free Survival (PFS), defined as the time from randomisation until the first evidence of disease progression or death[@PFS].
 
--   Disease-Free Survival (DFS), defined as the time from randomisation until evidence of disease recurrence [@disease-2011].
+-   Disease-Free Survival (DFS), defined as the time from randomisation until evidence of disease recurrence [@noauthor_disease-free_2011].
 
--   Event-Free Survival (EFS), defined as the time from randomisation to an event which may include disease progression, discontinuation of the treatment for any reason, or death [@event-fr2011].
+-   Event-Free Survival (EFS), defined as the time from randomisation to an event which may include disease progression, discontinuation of the treatment for any reason, or death [@EFS].
 
--   Relapse-Free Survival (RFS), defined as the length of time after primary treatment that the patient survives without any signs or symptoms of that cancer [@definiti2011].
+-   Relapse-Free Survival (RFS), defined as the length of time after primary treatment that the patient survives without any signs or symptoms of that cancer [@noauthor_definition_2011].
 
-The choice of tumor-based endpoint depends on the type of tumor studied [@kilickap], but they are all subject to the possibility of bias [@wilson2015]. Therefore, their use is more controversial compared with OS, due to the subjectivity of tumor assessment. These endpoints also rely more on how different scenarios are accounted for as that can affect whether some and until which points some patients are included in the analyses. This means that they are more prone to obtaining different results depending on the type of primary analysis and censoring rules employed [@lesan2024], and, therefore, to bias.
+The choice of tumor-based endpoint depends on the type of tumor studied [@kilickap_endpoints_nodate], but they are all subject to the possibility of bias [@wilson_outcomes_2015]. Therefore, their use is more controversial compared with OS, due to the subjectivity of tumor assessment. These endpoints also rely more on how different scenarios are accounted for as that can affect whether some and until which points some patients are included in the analyses. This means that they are more prone to obtaining different results depending on the type of primary analysis and censoring rules employed [@lesan_progression-free_2024], and, therefore, to bias.
 
 To evaluate how dependent the primary results are on methodological choices and assess their robustness and the potential impact of bias, sensitivity analyses are often employed. These analyses reassess study outcomes with varying methodologies, assumptions, and/or censoring rules. However, the choice of which primary and sensitivity analyses to include in the study remains a subjective one.
 
@@ -68,7 +67,7 @@ This study focused on this last point, making use of the publicly available resu
 
 We identified all oncological indications that received a positive opinion from the Committee for Medicinal Products for Human Use (CHMP) of the European Medicine Agency (EMA) between January 01, 2020 and December 31, 2024. Using the European public assessment reports (EPARs), we then identified 223 RCTs referred to as ‘main studies’.
 
-We used the results of an earlier audit of data sharing by pharmaceutical companies for oncology trials, to calculate the size of the sample needed for our study. This previous paper found that only 34% of trials that supported FDA approval between 2011 and 2021 had accessible IPD [@hopkins2023]. We used 34% as the expected proportion of reproducible trials and 12% as the half-width of the 95% CI and obtained 60 trials as required sample size for our study. Therefore we selected 60 RCTs using the sampling function \texttt{sample()} implemented in R, setting a seed for computational reproducibility.
+We used the results of an earlier audit of data sharing by pharmaceutical companies for oncology trials, to calculate the size of the sample needed for our study. This previous paper found that only 34% of trials that supported FDA approval between 2011 and 2021 had accessible IPD [@hopkins_heterogeneity_2023]. We used 34% as the expected proportion of reproducible trials and 12% as the half-width of the 95% CI and obtained 60 trials as required sample size for our study. Therefore we selected 60 RCTs using the sampling function \texttt{sample()} implemented in R, setting a seed for computational reproducibility.
 
 During the review of the documents of the selected trials, it was noticed that two of them did not report any analyses for neither OS nor any tumor based endpoint. They were removed from the sample and two more were randomly selected using the same function and seed but removing the already selected studies from the pool of selectable studies.
 
@@ -499,7 +498,7 @@ From those boxplots we can see that while the logarithm of ratio of HRs in TBE h
 
 To examine the relationship between the differences in HRs and the differences in standard errors, we plotted $\log\left(\frac{HR_{\scriptsize \mbox{Sensitivity}}}{HR_{\scriptsize \mbox{Primary}}}\right)$ against $\log(\frac{SE_{\scriptsize \mbox{Sensitivity}}}{SE_{\scriptsize \mbox{Primary}}})$ (Fig. \@ref(fig:Scatter-plot-TBE) for TBE and Fig. \@ref(fig:Scatter-plot-OS))in a scatter plot, where each dot was colored differently according to its NCT, to better visualize the cluster of different trials.
 
-```{r Scatter.plot-TBE, fig.cap="Log ratio of HRs vs ratio of SE for TBE",fig.width=7, fig.height=5, warning=FALSE, echo=FALSE}
+```{r Scatter-plot-TBE, fig.cap="Log ratio of HRs vs ratio of SE for TBE",fig.width=7, fig.height=8, warning=FALSE, echo=FALSE}
 
 library(ggplot2)
 library(viridis)
@@ -556,18 +555,15 @@ p_legend_TBE <- ggplot(dif_TBE_clean, aes(y = log_ratio, x = log_se, color = NCT
   theme_void() +
   guides(color = guide_legend(title = "NCT", ncol = 3, byrow = TRUE))
 
+#Results
 legend_only_TBE <- cowplot::get_legend(p_legend_TBE)
 
-# ---- Print results ----
-# Page 1: main plot
-p_main_TBE
-
-# Page 2: legend only (will appear below)
-cowplot::ggdraw(legend_only_TBE)
+cowplot::plot_grid(p_main_TBE, legend_only_TBE,
+                   ncol = 1, rel_heights = c(3, 1))
 
 ```
 
-```{r Scatter.plot-OS, fig.cap="Log ratio of HRs vs ratio of SE for OS", fig.width=7, fig.height=5, warning=FALSE, echo=FALSE}
+```{r Scatter-plot-OS, fig.cap="Log ratio of HRs vs ratio of SE for OS", fig.width=7, fig.height=8, warning=FALSE, echo=FALSE}
 dif_OS_clean$log_ratio <- fix_column(dif_OS_clean$log_ratio)
 dif_OS_clean$log_se <- fix_column(dif_OS_clean$log_se)
 dif_OS_clean$NCT <- as.factor(dif_OS_clean$NCT)
@@ -605,12 +601,8 @@ p_legend_OS<- ggplot(dif_OS_clean, aes(y = log_ratio, x = log_se, color = NCT)) 
 
 legend_only_OS <- cowplot::get_legend(p_legend_OS)
 
-# ---- Print results ----
-# Page 1: main plot
-p_main_OS
-
-# Page 2: legend only (will appear below)
-cowplot::ggdraw(legend_only_OS)
+cowplot::plot_grid(p_main_OS, legend_only_OS,
+                   ncol = 1, rel_heights = c(3, 1))
 ```
 
 Fig. \@ref(fig:Scatter-plot-TBE) and Fig. \@ref(fig:Scatter-plot-OS) indicates that smaller values of $\log\left(\frac{HR_{\scriptsize \mbox{Sensitivity}}}{HR_{\scriptsize \mbox{Primary}}}\right)$ correspond to larger values of $\log\left(\frac{SE_{\scriptsize \mbox{Sensitivity}}}{SE_{\scriptsize \mbox{Primary}}}\right)$ and vice versa.
@@ -818,9 +810,6 @@ Another limitation is that our analyses relies on the numerical results reported
 
 The analysis of the 60 randomly selected oncological RCTs provided an overview of how sensitivity analyses are reported in this field. Those analyses are especially valuable for tumor-based endpoints, such as PFS or DFS, which are more prone to subjectivity and assessment bias. Yet they were not planned or reported in 15 of the 60 studies in the case of tumor-based endpoints and 33 of 60 studies for OS.
 
-When they were reported, most varied the methods (80%) for OS, while for TBE the majority of sensitivity analyses changed the censoring rules used (50.8%), closely followed by changes in the analytic methods (36.1%).
-Our exploratory analysis comparing sensitivity analyses with their primary analyses found an association between the ratio of standard errors and the ratio of HRs (-0,66 with 95% CI [-0.82,-0.51] for TBE and -0.22 and 95% Ci [-0.33,-0,12] for OS), suggesting that part of the divergence may reflect differences in precision rather than differences in effect. The covariates examined did not explain this association and accounting for clustering within trials did not show a relevant difference in results.
+When they were reported, most varied the methods (80%) for OS, while for TBE the majority of sensitivity analyses changed the censoring rules used (50.8%), closely followed by changes in the analytic methods (36.1%). Our exploratory analysis comparing sensitivity analyses with their primary analyses found an association between the ratio of standard errors and the ratio of HRs (-0,66 with 95% CI [-0.82,-0.51] for TBE and -0.22 and 95% Ci [-0.33,-0,12] for OS), suggesting that part of the divergence may reflect differences in precision rather than differences in effect. The covariates examined did not explain this association and accounting for clustering within trials did not show a relevant difference in results.
 
 Given the exploratory nature of this analysis and the limited sample size, this findings would require further assessment based on a larger sample of trials, ideally with more complete reporting of all the sensitivity analyses.
-
-
