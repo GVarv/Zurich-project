@@ -1,7 +1,7 @@
 ---
 title: "A meta-study of sensitivity analyses with survival
 outcomes in oncology"
-bibliography: references.bib
+bibliography: Zurich.bib
 csl: american-medical-association.csl
 link-citations: true
 output:
@@ -18,12 +18,9 @@ header-includes:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(dev = "cairo_pdf")
 knitr::opts_chunk$set(fig.pos = "H", out.extra = "")
-#install.packages("tinytex")
-#tinytex::install_tinytex()
 
 library(kableExtra)
 library(jtools)
-# Use Bootstrap styling automatically
 options(kableExtra.html.bsTable = TRUE)
 ```
 
