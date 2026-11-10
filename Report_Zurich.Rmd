@@ -567,7 +567,7 @@ cowplot::ggdraw(legend_only_TBE)
 
 ```
 
-```{r Scatter.plot-OS, fig.cap="Log ratio of HRs vs ratio of SE for OS" fig.width=7, fig.height=5, warning=FALSE, echo=FALSE}
+```{r Scatter.plot-OS, fig.cap="Log ratio of HRs vs ratio of SE for OS", fig.width=7, fig.height=5, warning=FALSE, echo=FALSE}
 dif_OS_clean$log_ratio <- fix_column(dif_OS_clean$log_ratio)
 dif_OS_clean$log_se <- fix_column(dif_OS_clean$log_se)
 dif_OS_clean$NCT <- as.factor(dif_OS_clean$NCT)
