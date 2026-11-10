@@ -376,7 +376,7 @@ It is worth noticing that the number of studies that do not report any sensitivi
 
 The same study could also have multiple sensitivity analyses, which could belong to the same or to different categories. Fig. \@ref(fig:Sensitivity-categories)A shows the number of trials for which different categories of sensitivity analyses, while \@ref(fig:Sensitivity-categories)B illustrates the amount of sensitivity analysis per category across all trials that have been reported in the publicly available documents.
 
-```{r Sensitivity-categories, fig.cap="Sensitivity analyses by endpoint. (A) Number of different sensitivity analysis categories within the same study. (B) Frequency of each sensitivity analysis category per endpoint.", echo=FALSE, warning=FALSE, fig.width=12, fig.height=5}
+```{r Sensitivity-categories, fig.cap="Sensitivity analyses by endpoint. (A) Number of different sensitivity analysis categories within the same study. (B) Frequency of each sensitivity analysis category per endpoint.", echo=FALSE, warning=FALSE, fig.width=7, fig.height=8, out.width="100%", fig.align="center"}
 library(patchwork)
 
 ## ---------- Panel A ----------
@@ -449,7 +449,7 @@ We then focused on examining the possibility of a pattern in the choice of prima
 
 Fig. \@ref(fig:Differences-HR-SE)A shows the distribution of $\log(\frac{HR_{\scriptsize \mbox{Sensitivity}}}{HR_{\scriptsize \mbox{Primary}}})$ while Fig. \@ref(fig:Differences-HR-SE)B illustreate the distribution of $\log(\frac{SE_{Sensitivity}}{SE_{Primary}})$.
 
-```{r Differences-HR-SE, fig.cap="Differences between primary and sensitivity analyses by endpoint. (A) Logarithm of the ratio of hazard ratios. (B) Logarithm of the ratio of standard errors. The dashed red line indicates no difference.", echo=FALSE, warning=FALSE, fig.width=10, fig.height=5}
+```{r Differences-HR-SE, fig.cap="Differences between primary and sensitivity analyses by endpoint. (A) Logarithm of the ratio of hazard ratios. (B) Logarithm of the ratio of standard errors. The dashed red line indicates no difference.",echo=FALSE, warning=FALSE, fig.width=7, fig.height=8, out.width="100%", fig.align="center"}
 library(patchwork)
 
 ## ---------- Panel A: HR ----------
@@ -549,17 +549,23 @@ p_main_TBE <- ggplot(dif_TBE_clean, aes(y = log_ratio, x = log_se, color = NCT))
   labs(title = "TBE")
 
 # ---- Legend-only plot ----
+
 p_legend_TBE <- ggplot(dif_TBE_clean, aes(y = log_ratio, x = log_se, color = NCT)) +
   geom_point(size = 1.8, alpha = 0.7) +
-  scale_color_manual(values = my_colors) + 
+  scale_color_manual(values = my_colors) +
   theme_void() +
-  guides(color = guide_legend(title = "NCT", ncol = 3, byrow = TRUE))
+  guides(color = guide_legend(title = "NCT", ncol = 6, byrow = TRUE,
+                              keywidth = unit(0.3, "cm"),
+                              keyheight = unit(0.3, "cm"))) +
+  theme(legend.text = element_text(size = 6),
+        legend.title = element_text(size = 7),
+        legend.key.size = unit(0.3, "cm"),
+        legend.spacing.y = unit(0.05, "cm"))
 
-#Results
 legend_only_TBE <- cowplot::get_legend(p_legend_TBE)
 
 cowplot::plot_grid(p_main_TBE, legend_only_TBE,
-                   ncol = 1, rel_heights = c(3, 1))
+                   ncol = 1, rel_heights = c(2, 1))
 
 ```
 
